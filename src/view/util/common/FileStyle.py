@@ -25,17 +25,17 @@ class StyleManager():
 
     def __init__(self, custom=wx.EmptyString):
         super(StyleManager, self).__init__()
-        
-        
+
+
         self.fonts = self.GetFontDictionary()
         self.style_set = custom
-        self.syntax_set = list()
+        self.syntax_set = []
         if custom != wx.EmptyString and self.LoadStyleSheet(custom):
-            logger.info("Loaded custom style sheet %s" % custom)
+            logger.info(f"Loaded custom style sheet {custom}")
         elif custom == wx.EmptyString:
             self.SetStyles('default', DEF_STYLE_DICT)
         else:
-            logger.error("Failed to import styles from %s" % custom)        
+            logger.error(f"Failed to import styles from {custom}")        
 
     def GetFontDictionary(self, default=True):
         """Does a system lookup to build a default set of fonts using
@@ -63,14 +63,13 @@ class StyleManager():
 #                             wx.FONTWEIGHT_NORMAL)
 #             Profile_Set('FONT2', font, 'font')
         secondary = mfont.GetFaceName()
-        faces = {
-                  self.FONT_PRIMARY   : primary,
-                  self.FONT_SECONDARY : secondary,
-                  self.FONT_SIZE  : mfont.GetPointSize(),
-                  self.FONT_SIZE2 : mfont.GetPointSize(),
-                  self.FONT_SIZE3 : mfont.GetPointSize() - 2
-                 }
-        return faces
+        return {
+            self.FONT_PRIMARY: primary,
+            self.FONT_SECONDARY: secondary,
+            self.FONT_SIZE: mfont.GetPointSize(),
+            self.FONT_SIZE2: mfont.GetPointSize(),
+            self.FONT_SIZE3: mfont.GetPointSize() - 2,
+        }
 
     def BlankStyleDictionary(self):
         """Returns a dictionary of unset style items based on the
@@ -79,14 +78,12 @@ class StyleManager():
                  as keys.
 
         """
-        sty_dict = dict()
-        for key in DEF_STYLE_DICT.keys():
-            if key in ('select_style',):  # special styles
-                sty_dict[key] = NullStyleItem()
-            else:
-                sty_dict[key] = StyleItem("#000000", "#FFFFFF",
-                                          "%(primary)s", "%(size)d")
-        return sty_dict
+        return {
+            key: NullStyleItem()
+            if key in ('select_style',)
+            else StyleItem("#000000", "#FFFFFF", "%(primary)s", "%(size)d")
+            for key in DEF_STYLE_DICT.keys()
+        }
 
     def FindTagById(self, style_id):
         """Find the style tag that is associated with the given
@@ -95,10 +92,10 @@ class StyleManager():
         @return: style tag string
 
         """
-        for data in self.syntax_set:
-            if style_id == data[0]:
-                return data[1]
-        return 'default_style'
+        return next(
+            (data[1] for data in self.syntax_set if style_id == data[0]),
+            'default_style',
+        )
 
     def GetDefaultFont(self):
         """Constructs and returns a wxFont object from the settings
@@ -106,18 +103,16 @@ class StyleManager():
         @return: wx.Font object of default style
 
         """
-        if self.HasNamedStyle('default_style'):
-            style_item = self.GetItemByName('default_style')
-            face = style_item.GetFace()
-            if face and face[0] == u"%":
-                face = face % self.fonts
-            size = style_item.GetSize()
-            if isinstance(size, str):
-                size = size % self.fonts
-            font = wx.FFont(int(size), wx.MODERN, face=face)
-        else:
-            font = wx.FFont(self.fonts[self.FONT_SIZE], wx.MODERN)
-        return font
+        if not self.HasNamedStyle('default_style'):
+            return wx.FFont(self.fonts[self.FONT_SIZE], wx.MODERN)
+        style_item = self.GetItemByName('default_style')
+        face = style_item.GetFace()
+        if face and face[0] == u"%":
+            face = face % self.fonts
+        size = style_item.GetSize()
+        if isinstance(size, str):
+            size = size % self.fonts
+        return wx.FFont(int(size), wx.MODERN, face=face)
 
     def GetDefaultForeColour(self, as_hex=False):
         """Gets the foreground color of the default style and returns
@@ -188,13 +183,19 @@ class StyleManager():
         @return face name of current font in use
 
         """
-        if primary:
-            font = wx.FFont(self.fonts[self.FONT_SIZE], wx.DEFAULT,
-                            face=self.fonts[self.FONT_PRIMARY])
-        else:
-            font = wx.FFont(self.fonts[self.FONT_SIZE2], wx.DEFAULT,
-                            face=self.fonts[self.FONT_SECONDARY])
-        return font
+        return (
+            wx.FFont(
+                self.fonts[self.FONT_SIZE],
+                wx.DEFAULT,
+                face=self.fonts[self.FONT_PRIMARY],
+            )
+            if primary
+            else wx.FFont(
+                self.fonts[self.FONT_SIZE2],
+                wx.DEFAULT,
+                face=self.fonts[self.FONT_SECONDARY],
+            )
+        )
 
     def GetStyleByName(self, name):
         """Gets and returns a style string using its name for the search
@@ -274,12 +275,12 @@ class StyleManager():
 
         """
         if isinstance(style_sheet, str) and \
-           os.path.exists(style_sheet) and \
-           ((force or style_sheet not in StyleManager.STYLES) or \
-             style_sheet != self.style_set):
+               os.path.exists(style_sheet) and \
+               ((force or style_sheet not in StyleManager.STYLES) or \
+                 style_sheet != self.style_set):
             reader = GetFileReader(style_sheet)
             if reader == -1:
-                logger.debug("[ed_style][err] Failed to open style sheet: %s" % style_sheet)
+                logger.debug(f"[ed_style][err] Failed to open style sheet: {style_sheet}")
                 return False
             style_data = None
             try:
@@ -291,7 +292,7 @@ class StyleManager():
             reader.close()
             return ret_val
         elif style_sheet not in StyleManager.STYLES:
-            logger.warn("Style sheet %s does not exists" % style_sheet)
+            logger.warn(f"Style sheet {style_sheet} does not exists")
             # Reset to default style
 #             if Profile_Get('SYNTHEME') != 'default':
 #                 Profile_Set('SYNTHEME', 'default')
@@ -327,12 +328,7 @@ class StyleManager():
             # the standard set.
             for tag in DEF_STYLE_DICT.keys():
                 if tag not in style_set:
-                    if tag == 'select_style':
-                        style_set[tag] = NullStyleItem()
-                    else:
-                        style_set[tag] = default.Clone()
-        else:
-            pass
+                    style_set[tag] = NullStyleItem() if tag == 'select_style' else default.Clone()
         return style_set
 
     def ParseStyleData(self, style_data):
@@ -376,9 +372,9 @@ class StyleManager():
 
         # Check for L2/L3 Syntax errors and build a clean dictionary
         # of Tags => Valid Attributes
-        style_dict = dict()
+        style_dict = {}
         for branch in style_tree:
-            value = list()
+            value = []
             tag = branch[0].replace(u" ", u"")
             for leaf in branch[1]:
                 # Remove any remaining whitespace
@@ -393,11 +389,11 @@ class StyleManager():
                     value.append(leaf)
 
             # Skip all leafless branches
-            if len(value) != 0:
+            if value:
                 style_dict[tag] = value
 
         # Validate leaf values and format into style string
-        rdict = dict()
+        rdict = {}
         for style_def in style_dict:
             if not style_def[0][0].isalpha():
                 logger.debug("[ed_style][err] The style def %s is not a "
@@ -413,7 +409,7 @@ class StyleManager():
                     # Check that colors are a hex string
                     n_values = len(values)
                     if n_values and \
-                       attrib[0] in "fore back" and RE_HEX_STR.match(values[0]):
+                           attrib[0] in "fore back" and RE_HEX_STR.match(values[0]):
                         v1ok = True
                     elif n_values and attrib[0] == "size":
                         if RE_ESS_SCALAR.match(values[0]) or values[0].isdigit():
@@ -421,12 +417,12 @@ class StyleManager():
                         else:
                             logger.debug("[ed_style][warn] Bad value in %s"
                                      " the value %s is invalid." % \
-                                     (attrib[0], values[0]))
+                                         (attrib[0], values[0]))
                     elif n_values and attrib[0] == "face":
                         # Font names may have spaces in them so join the
                         # name of the font into one item.
                         if n_values > 1 and values[1] not in STY_EX_ATTRIBUTES:
-                            tmp = list()
+                            tmp = []
                             for val in list(values):
                                 if val not in STY_EX_ATTRIBUTES:
                                     tmp.append(val)
@@ -443,8 +439,8 @@ class StyleManager():
                         for value in values[1:]:
                             if value not in STY_EX_ATTRIBUTES:
                                 logger.debug("[ed_style][warn] Unknown extra " + \
-                                         "attribute '" + values[1] + \
-                                         "' in attribute: " + attrib[0])
+                                             "attribute '" + values[1] + \
+                                             "' in attribute: " + attrib[0])
                                 break
                             else:
                                 v2ok = True
@@ -506,7 +502,7 @@ class StyleManager():
 
         """
         if not isinstance(value, StyleItem):
-            logger.debug("[ed_style][warn] Bad data in SetStyleTag(%s)" % repr(value))
+            logger.debug(f"[ed_style][warn] Bad data in SetStyleTag({repr(value)})")
             return False
 
         StyleManager.STYLES[self.style_set][style_tag] = value
@@ -564,10 +560,10 @@ class StyleManager():
         """
         # Parses Syntax Specifications list, ignoring all bad values
         self.UpdateBaseStyles()
-        valid_settings = list()
+        valid_settings = []
         for syn in synlst:
             if len(syn) != 2:
-                logger.debug("[ed_style][warn] Bogus Syntax Spec %s" % repr(syn))
+                logger.debug(f"[ed_style][warn] Bogus Syntax Spec {repr(syn)}")
                 continue
             else:
                 self.StyleSetSpec(syn[0], self.GetStyleByName(syn[1]))
@@ -694,8 +690,8 @@ class StyleItem():
         super()
 
         if ex is None:
-            ex = list()
-            
+            ex = []
+
         # Attributes
         self.null = False
         self.fore = fore  # Foreground color hex code
@@ -728,15 +724,15 @@ class StyleItem():
         @return: Unicode representation of the StyleItem
 
         """
-        style_str = list()
+        style_str = []
         if self.fore:
-            style_str.append(u"fore:%s" % self.fore)
+            style_str.append(f"fore:{self.fore}")
         if self.back:
-            style_str.append(u"back:%s" % self.back)
+            style_str.append(f"back:{self.back}")
         if self.face:
-            style_str.append(u"face:%s" % self.face)
+            style_str.append(f"face:{self.face}")
         if self.size:
-            style_str.append(u"size:%s" % self.size)
+            style_str.append(f"size:{self.size}")
         if len(self._exattr):
             style_str.append(u"modifiers:" + u','.join(self._exattr))
 
@@ -759,11 +755,11 @@ class StyleItem():
         @return: list attribute values usable for building stc or ess values
 
         """
-        retval = list()
+        retval = []
         for attr in ('fore', 'back', 'face', 'size'):
             val = getattr(self, attr, None)
             if val not in (None, wx.EmptyString):
-                retval.append(attr + ':' + val)
+                retval.append(f'{attr}:{val}')
 
         if len(self._exattr):
             retval.append("modifiers:" + u",".join(self._exattr))
@@ -842,7 +838,7 @@ class StyleItem():
         self.null = True
         for attr in ('fore', 'face', 'back', 'size'):
             setattr(self, attr, u'')
-        self._exattr = list()
+        self._exattr = []
 
     #---- Set Functions ----#
     def SetAttrFromStr(self, style_str):
@@ -862,7 +858,7 @@ class StyleItem():
                 if last_set == u"modifiers":
                     self.SetExAttr(attrib[1])
                 else:
-                    setattr(self, attrib[0], attrib[1])
+                    setattr(self, last_set, attrib[1])
             else:
                 for attr in attrib:
                     if attr in STY_EX_ATTRIBUTES:
@@ -940,8 +936,6 @@ class StyleItem():
             self._exattr.append(ex_attr)
         elif not add and ex_attr in self._exattr:
             self._exattr.remove(ex_attr)
-        else:
-            pass
 
     def SetNamedAttr(self, attr, value):
         """Sets a StyleItem attribute by named string.

@@ -48,7 +48,7 @@ class MegaImageRenderer(gridlib.GridCellRenderer):
         blobData = grid.data.get(row + 1)[col]
         bmp = wx.Bitmap(2, 2)
         try:
-            
+
             img1 = wx.Image(io.BytesIO(blobData))
 #             img1.SetType(wx.BITMAP_TYPE_ANY)
 #                 img1 = wx.Image(self.blobData)
@@ -58,7 +58,7 @@ class MegaImageRenderer(gridlib.GridCellRenderer):
             print(e)
 #         bmp = wx.Bitmap("IMG_20180918_115610.jpg", wx.BITMAP_TYPE_ANY).ConvertToBitmap()
 #             bmp = self._choices[ choice % len(self._choices)]()
-        
+
         image = wx.MemoryDC()
         image.SelectObject(bmp)
 
@@ -76,12 +76,8 @@ class MegaImageRenderer(gridlib.GridCellRenderer):
         # copy the image but only to the size of the grid cell
         width, height = bmp.GetWidth(), bmp.GetHeight()
 
-        if width > rect.width - 2:
-            width = rect.width - 2
-
-        if height > rect.height - 2:
-            height = rect.height - 2
-
+        width = min(width, rect.width - 2)
+        height = min(height, rect.height - 2)
         dc.Blit(rect.x + 1, rect.y + 1, width, height,
                 image,
                 0, 0, wx.COPY, True)
@@ -167,10 +163,7 @@ class MyCellEditor(gridlib.PyGridCellEditor):
         """
         logger.info("MyCellEditor: EndEdit (%s)\n" % oldVal)
         val = self._tc.GetValue()
-        if val != oldVal:  # self.startValue:
-            return val
-        else:
-            return None
+        return val if val != oldVal else None
 
     def ApplyEdit(self, row, col, grid):
         """
@@ -207,8 +200,11 @@ class MyCellEditor(gridlib.PyGridCellEditor):
         # return super(MyCellEditor, self).IsAcceptedKey(evt)
 
         # or do it ourselves
-        return (not (evt.ControlDown() or evt.AltDown()) and
-                evt.GetKeyCode() != wx.WXK_SHIFT)
+        return (
+            not evt.ControlDown()
+            and not evt.AltDown()
+            and evt.GetKeyCode() != wx.WXK_SHIFT
+        )
 
     def StartingKey(self, evt):
         """
@@ -372,39 +368,36 @@ class ResultDataGrid(gridlib.Grid):
 #                                     data='3.jpg'
 #                                     self.SetCellRenderer(row, col, MegaImageRenderer(self.GetTable(), data))
 #                                 elif str(colValue).startswith('-______-'):
-                                    
+
                                 if str(colValue).startswith('-______-'):
                                     newStringValue = str(colValue).replace('-______-', '')
                                     self.SetCellFont(row, col, wx.Font(10, wx.FONTFAMILY_SCRIPT, wx.FONTSTYLE_ITALIC, wx.FONTWEIGHT_NORMAL))
                                     self.SetCellTextColour(row, col, wx.LIGHT_GREY)
                                     self.SetCellValue(row, col, newStringValue)
-                                else:
-                                    if dataTypeRow and dataTypeRow[col].lower() == 'blob':
+                                elif dataTypeRow and dataTypeRow[col].lower() == 'blob':
 #                                         data='3.jpg'
-                                        if str(colValue).startswith('-______-'):
-                                            newStringValue = str(colValue).replace('-______-', '')
-                                            self.SetCellFont(row, col, wx.Font(10, wx.FONTFAMILY_SCRIPT, wx.FONTSTYLE_ITALIC, wx.FONTWEIGHT_NORMAL))
-                                            self.SetCellTextColour(row, col, wx.LIGHT_GREY)
-                                            self.SetCellValue(row, col, newStringValue)
-                                        else:
-                                            self.SetCellRenderer(row, col, MegaImageRenderer(self.GetTable(), colValue))
-                                    elif dataTypeRow and dataTypeRow[col].lower() == 'integer':
-                                        self.SetCellRenderer(row, col, gridlib.GridCellNumberRenderer())
-                                        self.SetCellValue(row, col, str(colValue))
-                                    elif dataTypeRow and dataTypeRow[col].lower() == 'datetime':
-                                        self.SetCellRenderer(row, col, gridlib.GridCellDateTimeRenderer())
-                                        self.SetCellValue(row, col, colValue)
-                                    elif dataTypeRow and dataTypeRow[col].lower() == 'boolean':
-                                        self.SetCellEditor(row, col, gridlib.GridCellBoolEditor())
-                                        self.SetCellRenderer(row, col, CheckBoxCellRenderer(self))
-                                        self.SetCellValue(row, col, str(colValue))
-                                        self.SetCellAlignment(row, col, wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
-#                                     elif dataTypeRow and dataTypeRow[col] in ['varchar', 'int']:
-                                    else:                               
+                                    if str(colValue).startswith('-______-'):
+                                        newStringValue = str(colValue).replace('-______-', '')
+                                        self.SetCellFont(row, col, wx.Font(10, wx.FONTFAMILY_SCRIPT, wx.FONTSTYLE_ITALIC, wx.FONTWEIGHT_NORMAL))
+                                        self.SetCellTextColour(row, col, wx.LIGHT_GREY)
+                                        self.SetCellValue(row, col, newStringValue)
+                                    else:
+                                        self.SetCellRenderer(row, col, MegaImageRenderer(self.GetTable(), colValue))
+                                elif dataTypeRow and dataTypeRow[col].lower() == 'integer':
+                                    self.SetCellRenderer(row, col, gridlib.GridCellNumberRenderer())
+                                    self.SetCellValue(row, col, str(colValue))
+                                elif dataTypeRow and dataTypeRow[col].lower() == 'datetime':
+                                    self.SetCellRenderer(row, col, gridlib.GridCellDateTimeRenderer())
+                                    self.SetCellValue(row, col, colValue)
+                                elif dataTypeRow and dataTypeRow[col].lower() == 'boolean':
+                                    self.SetCellEditor(row, col, gridlib.GridCellBoolEditor())
+                                    self.SetCellRenderer(row, col, CheckBoxCellRenderer(self))
+                                    self.SetCellValue(row, col, str(colValue))
+                                    self.SetCellAlignment(row, col, wx.ALIGN_RIGHT, wx.ALIGN_CENTRE)
+                                else:                               
 #                                     self.SetCellFont(dataKey - 1, idx,  wx.Font(10, wx.FONTFAMILY_ROMAN, wx.FONTSTYLE_ITALIC, wx.FONTWEIGHT_NORMAL))
 #                                     self.SetCellTextColour(dataKey - 1, idx,wx.LIGHT_GREY)
-                                        self.SetCellValue(row, col, str(colValue))
-#                                 self.SetCellAlignment(dataKey - 1,idx, wx.ALIGN_RIGHT)
+                                    self.SetCellValue(row, col, str(colValue))
                             except Exception as e:
                                 logger.error(e, exc_info=True)
             else:
@@ -425,27 +418,29 @@ class ResultDataGrid(gridlib.Grid):
         # Show cell selection
         # If selection is cell...
         if self.GetSelectedCells():
-            logger.info("Selected cells " + str(self.GetSelectedCells()))
+            logger.info(f"Selected cells {str(self.GetSelectedCells())}")
         # If selection is block...
         if self.GetSelectionBlockTopLeft():
-            logger.info("Selection block top left " + str(self.GetSelectionBlockTopLeft()))
+            logger.info(f"Selection block top left {str(self.GetSelectionBlockTopLeft())}")
         if self.GetSelectionBlockBottomRight():
-            logger.info("Selection block bottom right " + str(self.GetSelectionBlockBottomRight()))
+            logger.info(
+                f"Selection block bottom right {str(self.GetSelectionBlockBottomRight())}"
+            )
 
         # If selection is col...
         if self.GetSelectedCols():
-            logger.info("Selected cols " + str(self.GetSelectedCols()))
+            logger.info(f"Selected cols {str(self.GetSelectedCols())}")
 
         # If selection is row...
         if self.GetSelectedRows():
-            logger.info("Selected rows " + str(self.GetSelectedRows()))
+            logger.info(f"Selected rows {str(self.GetSelectedRows())}")
 
     def currentcell(self):
         # Show cursor position
         row = self.GetGridCursorRow()
         col = self.GetGridCursorCol()
         cell = (row, col)
-        logger.info("Current cell " + str(cell))
+        logger.info(f"Current cell {cell}")
         return row, col
 
     def OnKey(self, event):
@@ -464,9 +459,12 @@ class ResultDataGrid(gridlib.Grid):
             self.paste()
 
         # If Ctrl+Z is pressed...
-        if event.ControlDown() and event.GetKeyCode() == 90:
-            if self.data4undo[2] != '':
-                self.paste('undo')
+        if (
+            event.ControlDown()
+            and event.GetKeyCode() == 90
+            and self.data4undo[2] != ''
+        ):
+            self.paste('undo')
 
         # If Supr is presed
         if event.GetKeyCode() == 127:
@@ -610,8 +608,6 @@ class ResultDataGrid(gridlib.Grid):
         elif keycode == wx.WXK_RIGHT:
             logger.info('you pressed the right key')
             self.grid.MoveCursorRight(False)
-        else:
-            pass
         event.Skip()
 
 #----------------------------------------------------------------------
@@ -805,8 +801,6 @@ class ResultDataGrid(gridlib.Grid):
                 wx.TheClipboard.Close()
             else:
                 wx.MessageBox("Unable to open the clipboard", "Error")
-#             self.header = header
-            pass
 
         self.Bind(wx.EVT_MENU, copyColumnName, id=copyHeaderId)
 
@@ -865,8 +859,6 @@ class GridCellPopupMenu(wx.Menu):
 
     def onExport(self, event):
         logger.info('onExport')
-#         print "Item Two selected in the %s window" % self.WinName
-        pass
 
     def countRows(self, event):
         logger.info(f'countRows: {self.GetWindow().GetNumberRows()}')
@@ -918,10 +910,7 @@ class GridHeaderPopupMenu(wx.Menu):
             _data.append((entry.get(name, None), row))
 
         _data.sort()
-        self.data = []
-
-        for sortvalue, row in _data:
-            self.data.append(row)
+        self.data = [row for sortvalue, row in _data]
 
     def copyColumnName(self, event):
 #         print "Item Three selected in the %s window"%self.WinName
@@ -972,12 +961,10 @@ class CheckBoxCellRenderer(gridlib.GridCellRenderer):
         return wx.Size(self.SIZE * 2, self.SIZE)
  
     def Draw(self, grid, _attr, dc, rect, row, col, _isSelected):
-        flags = 0
-        if grid.GetCellValue(row, col) == "1":
-            flags = wx.CONTROL_CHECKED
+        flags = wx.CONTROL_CHECKED if grid.GetCellValue(row, col) == "1" else 0
         if not self.enabled:
             flags |= wx.CONTROL_DISABLED
- 
+
         dc.DrawRectangle(rect)
         renderer = wx.RendererNative.Get()
         renderer.DrawCheckBox(self.parent, dc, rect, flags)

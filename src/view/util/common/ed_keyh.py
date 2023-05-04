@@ -243,20 +243,13 @@ class ViKeyHandler(KeyHandler):
         self._ProcessKey(key_code)
 
         # Update status bar
-        if self.IsNormalMode():
-            if self.stc.GetTopLevelParent():
-                evt = StatusEvent(edEVT_STATUS,
-                                           self.stc.GetId(),
-                                           u"NORMAL %s" % self.buffer,
-                                           SB_BUFF)
-                wx.PostEvent(self.stc.GetTopLevelParent(), evt)
+        if self.IsNormalMode() and self.stc.GetTopLevelParent():
+            evt = StatusEvent(
+                edEVT_STATUS, self.stc.GetId(), f"NORMAL {self.buffer}", SB_BUFF
+            )
+            wx.PostEvent(self.stc.GetTopLevelParent(), evt)
 
-        if f_cmd:
-            return True
-        else:
-            # If we're in insert mode we must return False
-            # so the text gets inserted into the editor
-            return False
+        return bool(f_cmd)
 
     def _ProcessKey(self, key_code):
         """The real processing of keys"""

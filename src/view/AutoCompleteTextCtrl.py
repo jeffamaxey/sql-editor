@@ -41,12 +41,11 @@ def getSmallUpArrowImage():
     while tail != 'src':
         path = os.path.abspath(os.path.join(path, '..'))
         head, tail = os.path.split(path)
-        
+
     imageLocation = os.path.join(path, "images")
-    image = wx.Image(os.path.join(imageLocation, "bullet_arrow_up.png"), wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-    
-#     stream = StringIO.StringIO(getSmallDnArrowData())
-    return image
+    return wx.Image(
+        os.path.join(imageLocation, "bullet_arrow_up.png"), wx.BITMAP_TYPE_PNG
+    ).ConvertToBitmap()
 #     stream = io.StringIO(getSmallUpArrowData())
 #     return wx.ImageFromStream(stream)
 
@@ -72,12 +71,12 @@ def getSmallDnArrowImage():
     while tail != 'src':
         path = os.path.abspath(os.path.join(path, '..'))
         head, tail = os.path.split(path)
-        
+
     imageLocation = os.path.join(path, "images")
-    image = wx.Image(os.path.join(imageLocation, "bullet_arrow_down.png"), wx.BITMAP_TYPE_PNG).ConvertToBitmap()
-    
-#     stream = StringIO.StringIO(getSmallDnArrowData())
-    return image
+    return wx.Image(
+        os.path.join(imageLocation, "bullet_arrow_down.png"),
+        wx.BITMAP_TYPE_PNG,
+    ).ConvertToBitmap()
 
 
 #----------------------------------------------------------------------
@@ -91,11 +90,11 @@ class myListCtrl(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
 
 class TextCtrlAutoComplete (wx.TextCtrl, listmix.ColumnSorterMixin):
     
-    def __init__ (self, parent, id=-1, colNames=None, choices=None,
+    def __init__(self, parent, id=-1, colNames=None, choices=None,
                   multiChoices=None, showHead=True, dropDownClick=True,
                   colFetch=-1, colSearch=0, hideOnNoMatch=True, size=wx.DefaultSize,
                   selectCallback=None, entryCallback=None, matchFunction=None,
-                  **therest) :
+                  **therest):
         '''
         Constructor works just like wx.TextCtrl except you can pass in a
         list of choices.  You can also change the choice list at any time
@@ -120,7 +119,7 @@ class TextCtrlAutoComplete (wx.TextCtrl, listmix.ColumnSorterMixin):
         self._matchFunction = matchFunction
         self._screenheight = wx.SystemSettings.GetMetric(wx.SYS_SCREEN_Y)
         # sort variable needed by listmix
-        self.itemDataMap = dict()
+        self.itemDataMap = {}
         # Load and sort data
         if not (self._multiChoices or self._choices):
             raise ValueError("Pass me at least one of multiChoices OR choices")
@@ -134,8 +133,7 @@ class TextCtrlAutoComplete (wx.TextCtrl, listmix.ColumnSorterMixin):
         self.dropdownlistbox = myListCtrl(self.dropdown, style=flags,
                                  pos=wx.Point(0, 0))
         # initialize the parent
-        if multiChoices: ln = len(multiChoices)
-        else: ln = 1
+        ln = len(multiChoices) if multiChoices else 1
         # else: ln = len(choices)
         listmix.ColumnSorterMixin.__init__(self, ln)
         # load the data
@@ -312,8 +310,7 @@ class TextCtrlAutoComplete (wx.TextCtrl, listmix.ColumnSorterMixin):
             raise ValueError("You have to pass me a multi-dimension list with at least two entries") 
             # with only one entry, the dropdown artifacts
         for numCol, rowValues in enumerate(choices[0]):
-            if self._colNames: colName = self._colNames[numCol]
-            else: colName = "Select %i" % numCol
+            colName = self._colNames[numCol] if self._colNames else "Select %i" % numCol
             self.dropdownlistbox.InsertColumn(numCol, colName)
         for numRow, valRow in enumerate(choices):
             for numCol, colVal in enumerate(valRow):
@@ -363,15 +360,14 @@ class TextCtrlAutoComplete (wx.TextCtrl, listmix.ColumnSorterMixin):
         self._matchFunction = mf
 
     # -- Internal methods
-    def _setValueFromSelected(self) :
+    def _setValueFromSelected(self):
         '''
         Sets the wx.TextCtrl value from the selected wx.ListCtrl item.
         Will do nothing if no item is selected in the wx.ListCtrl.
         '''
         sel = self.dropdownlistbox.GetFirstSelected()
         if sel > -1:
-            if self._colFetch != -1: col = self._colFetch
-            else: col = self._colSearch
+            col = self._colFetch if self._colFetch != -1 else self._colSearch
             itemtext = self.dropdownlistbox.GetItem(sel, col).GetText()
             if self._selectCallback:
                 dd = self.dropdownlistbox
@@ -426,10 +422,7 @@ class TextCtrlAutoComplete (wx.TextCtrl, listmix.ColumnSorterMixin):
         self.SetColumnCount(numVal)
 
     def _setListSize(self):
-        if self._multiChoices:
-            choices = self._multiChoices
-        else:
-            choices = self._choices
+        choices = self._multiChoices if self._multiChoices else self._choices
         longest = 0
         for choice in choices :
             longest = max(len(choice), longest)
@@ -445,16 +438,18 @@ class TextCtrlAutoComplete (wx.TextCtrl, listmix.ColumnSorterMixin):
 class test:
 
     def __init__(self):
-        args = {}
-        if True:
-            args["colNames"] = ("col1", "col2")
-            args["multiChoices"] = [ ("Zoey", "WOW"), ("Alpha", "wxPython"),
-                                    ("Ceda", "Is"), ("Beta", "fantastic"),
-                                    ("zoebob", "!!")]
-            args["colFetch"] = 1
-        else:
-            args["choices"] = ["123", "cs", "cds", "Bob", "Marley", "Alpha"]
-        args["selectCallback"] = self.selectCallback
+        args = {
+            "colNames": ("col1", "col2"),
+            "multiChoices": [
+                ("Zoey", "WOW"),
+                ("Alpha", "wxPython"),
+                ("Ceda", "Is"),
+                ("Beta", "fantastic"),
+                ("zoebob", "!!"),
+            ],
+            "colFetch": 1,
+            "selectCallback": self.selectCallback,
+        }
         self.dynamic_choices = [
                         'aardvark', 'abandon', 'acorn', 'acute', 'adore',
                         'aegis', 'ascertain', 'asteroid',
@@ -558,19 +553,21 @@ class TextCtrlAutoCompletePanel(wx.Panel):
         wx.Panel.__init__(self, parent, id=-1)
         self.size = (200, 30)
         self.parent = parent
-        
+
         vBox = wx.BoxSizer(wx.VERTICAL)
         ####################################################################
-        args = {}
-        if True:
-            args["colNames"] = ("col1", "col2")
-            args["multiChoices"] = [ ("Zoey", "WOW"), ("Alpha", "wxPython"),
-                                    ("Ceda", "Is"), ("Beta", "fantastic"),
-                                    ("zoebob", "!!")]
-            args["colFetch"] = 1
-        else:
-            args["choices"] = ["123", "cs", "cds", "Bob", "Marley", "Alpha"]
-        args["selectCallback"] = self.selectCallback        
+        args = {
+            "colNames": ("col1", "col2"),
+            "multiChoices": [
+                ("Zoey", "WOW"),
+                ("Alpha", "wxPython"),
+                ("Ceda", "Is"),
+                ("Beta", "fantastic"),
+                ("zoebob", "!!"),
+            ],
+            "colFetch": 1,
+        }
+        args["selectCallback"] = self.selectCallback
         self.dynamic_choices = [
                 'aardvark', 'abandon', 'acorn', 'acute', 'adore',
                 'aegis', 'ascertain', 'asteroid',

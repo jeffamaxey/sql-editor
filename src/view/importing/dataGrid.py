@@ -152,7 +152,7 @@ class SimpleGrid(gridlib.Grid): ##, mixins.GridAutoEditMixin):
         evt.Skip()
 
     def OnGridColSort(self, evt):
-        logger.info("OnGridColSort: %s %s" % (evt.GetCol(), self.GetSortingColumn()))
+        logger.info(f"OnGridColSort: {evt.GetCol()} {self.GetSortingColumn()}")
         self.SetSortingColumn(evt.GetCol())
 
     def OnRowSize(self, evt):
@@ -166,10 +166,7 @@ class SimpleGrid(gridlib.Grid): ##, mixins.GridAutoEditMixin):
         evt.Skip()
 
     def OnRangeSelect(self, evt):
-        if evt.Selecting():
-            msg = 'Selected'
-        else:
-            msg = 'Deselected'
+        msg = 'Selected' if evt.Selecting() else 'Deselected'
         logger.info("OnRangeSelect: %s  top-left %s, bottom-right %s\n" %
                            (msg, evt.GetTopLeftCoords(), evt.GetBottomRightCoords()))
         evt.Skip()
@@ -198,10 +195,7 @@ class SimpleGrid(gridlib.Grid): ##, mixins.GridAutoEditMixin):
 
 
     def OnSelectCell(self, evt):
-        if evt.Selecting():
-            msg = 'Selected'
-        else:
-            msg = 'Deselected'
+        msg = 'Selected' if evt.Selecting() else 'Deselected'
         logger.info("OnSelectCell: %s (%d,%d) %s\n" %
                        (msg, evt.GetRow(), evt.GetCol(), evt.GetPosition()))
 

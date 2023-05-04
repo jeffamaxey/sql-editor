@@ -62,7 +62,4 @@ class FileTypeChecker(object):
         @return: bool
 
         """
-        f_ok = False
-        if os.access(fname, os.R_OK):
-            f_ok = not self.IsBinary(fname)
-        return f_ok
+        return not self.IsBinary(fname) if os.access(fname, os.R_OK) else False

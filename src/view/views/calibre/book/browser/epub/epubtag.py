@@ -24,7 +24,7 @@ class EpubBook:
            and the DOM for the OPF file with all the metadata.
         '''
         if not zipfile.is_zipfile(filename):
-            raise RuntimeError(filename + " isn't an epub file (not zipped)")
+            raise RuntimeError(f"{filename} isn't an epub file (not zipped)")
 
         self.filename = filename
         self.zip = zipfile.ZipFile(filename)
@@ -41,20 +41,17 @@ class EpubBook:
         for f in self.zip.namelist():
             if os.path.basename(f).endswith('.opf'):
                 if self.contentfile:
-                    raise RuntimeError("Multiple opf files in %s"
-                                       % self.filename)
+                    raise RuntimeError(f"Multiple opf files in {self.filename}")
                 self.contentfile = f
                 content = self.zip.open(f)
                 break
         if not content:
-            raise RuntimeError('No .opf file in %s' % self.filename)
-            return
-
+            raise RuntimeError(f'No .opf file in {self.filename}')
         # Now content is a file handle on the content.opf XML file
         try:
             self.dom = xml.dom.minidom.parse(content)
         except IOError as e:
-            raise IOError( self.filename + ': ' + str(e))
+            raise IOError(f'{self.filename}: {str(e)}')
 
         content.close()
 
@@ -154,26 +151,22 @@ class EpubBook:
             outstr += ', '.join(titles) + " | "
         else:
             for t in titles:
-                outstr += "Title: " + t + "\n"
+                outstr += f"Title: {t}" + "\n"
 
         authors = self.get_authors()
         if brief:
             outstr += ', '.join(authors) + ' | '
         else:
-            if len(authors) > 1:
-                outstr += "Authors: "
-            else:
-                outstr += "Author: "
+            outstr += "Authors: " if len(authors) > 1 else "Author: "
             outstr += ', '.join(authors) + "\n"
 
         tags = self.get_tags()
         if brief:
             outstr += ', '.join(tags)
-        else:
-            if tags:
-                outstr += "Tags: "
-                for tag in tags:
-                    outstr += '\n   ' + tag
+        elif tags:
+            outstr += "Tags: "
+            for tag in tags:
+                outstr += '\n   ' + tag
 
         return outstr
 
@@ -195,17 +188,13 @@ class EpubBook:
             print( "Warning: didn't see any subject tags previously")
             parent = self.dom.getElementsByTagName("metadata")[0]
 
-            # If there's no metadata tag, maybe we should add one,
-            # but it might be better to throw an error.
-            if not parent:
-                raise RuntimeError("No metadata tag! Bailing.")
+        # If there's no metadata tag, maybe we should add one,
+        # but it might be better to throw an error.
+        if not parent:
+            raise RuntimeError("No metadata tag! Bailing.")
 
         # We'll want to add the new subject tags after the last one.
-        if elements:
-            last_tag_el = elements[-1]
-        else:
-            last_tag_el = None
-
+        last_tag_el = elements[-1] if elements else None
         for new_tag in new_tag_list:
             # Don't add duplicate tags (case-insensitive).
             new_tag_lower = new_tag.lower()
@@ -250,13 +239,12 @@ class EpubBook:
         '''
         # Open a new zip file to write to, and copy everything
         # but change the content.opf (or whatever.opf) to the new one:
-        new_epub_file = self.filename + '.tmp'
+        new_epub_file = f'{self.filename}.tmp'
         ozf = zipfile.ZipFile(new_epub_file, 'w')
         for info in self.zip.infolist():
             if info.filename in self.replace_files:
-                fp = open(self.replace_files[info.filename])
-                ozf.writestr(info, fp.read())
-                fp.close()
+                with open(self.replace_files[info.filename]) as fp:
+                    ozf.writestr(info, fp.read())
             elif info.filename == "mimetype":
                 # The mimetype file must be written uncompressed.
                 ozf.writestr(info, self.zip.read(info.filename),
@@ -284,7 +272,7 @@ class EpubBook:
 
         # Now we have the new file in new_epub_file, old in filename.
         # Rename appropriately:
-        bakfile = self.filename + ".bak"
+        bakfile = f"{self.filename}.bak"
         os.rename(self.filename, bakfile)
         os.rename(new_epub_file, self.filename)
         print( "Wrote", self.filename)
@@ -392,10 +380,8 @@ class EpubBook:
                 # If it doesn't end with an image type, we can't use it
                 coverimg = None
 
-        # If we didn't find one in the manifest, try looking in guide:
         if not coverimg:
-            guide = self.dom.getElementsByTagName("guide")
-            if guide:
+            if guide := self.dom.getElementsByTagName("guide"):
                 parent = guide[0]
                 for item in parent.getElementsByTagName("reference"):
                     if item.getAttribute("type").lower() == "cover":
@@ -438,10 +424,9 @@ class EpubBook:
             return None, None
 
         outfilename = os.path.join(outdir, base)
-        outfp = open(outfilename, 'w')
-        outfp.write(infp.read())
-        infp.close()
-        outfp.close()
+        with open(outfilename, 'w') as outfp:
+            outfp.write(infp.read())
+            infp.close()
         return outfilename, coverimg
 
     def extract_images(self, outdir=''):
@@ -462,12 +447,11 @@ class EpubBook:
                 while os.path.exists(outfilename):
                     print( os.path.basename(outfilename), "already exists")
                     se = os.path.splitext(outfilename)
-                    outfilename = se[0] + '-' + str(i) + se[1]
-                outfp = open(outfilename, 'w')
-                outfp.write(infp.read())
-                print( "Extracted", f, "to", outfilename)
-                infp.close()
-                outfp.close()
+                    outfilename = f'{se[0]}-{i}{se[1]}'
+                with open(outfilename, 'w') as outfp:
+                    outfp.write(infp.read())
+                    print( "Extracted", f, "to", outfilename)
+                    infp.close()
 
 # main
 if __name__ == "__main__":

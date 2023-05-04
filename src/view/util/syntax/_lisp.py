@@ -390,7 +390,7 @@ class SyntaxData(syndata.SyntaxDataBase):
         elif self.LangId == synglob.ID_LANG_NEWLISP:
             return [NEWLISP_FUNC, NEWLISP_KEYWORDS]
         else:
-            return list()
+            return []
 
     def GetSyntaxSpec(self):
         """Syntax Specifications """

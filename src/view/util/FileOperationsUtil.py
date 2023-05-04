@@ -26,7 +26,7 @@ class FileOperations():
 				logger.error(filename)
 				logger.error(e, exc_info=True)
 		else:  
-			logger.error("Sorry, I can not find %s file." % filename)
+			logger.error(f"Sorry, I can not find {filename} file.")
 		return isFileRemoved
 	
 	def readFile(self, filePath=None):
@@ -46,46 +46,40 @@ class FileOperations():
 			try:
 				with open(filePath, newline='', encoding='utf-8') as csvfile:
 					spamreader = csv.reader(csvfile, delimiter=delimiter, quotechar='|')
-					idKey = 1
-					if columnNameFirstRow:
-						idKey = 0
+					idKey = 0 if columnNameFirstRow else 1
 					for row in spamreader:
 						data[idKey] = tuple(row)
 						idKey += 1
 					if not columnNameFirstRow:
-						colName = list()
-						for idx, rowdata in enumerate(data[1]):
-							colName.append("Col_{}".format(idx))
+						colName = [f"Col_{idx}" for idx, rowdata in enumerate(data[1])]
 						data[0] = tuple(colName)
-# 						logger.info(', '.join(row))
 			except Exception as ex:
-				logger.error(ex, exc_info=True)		
+				logger.error(ex, exc_info=True)
 		return data
 
 	def createTableScript(self, tableName=None, columnHeader=None):
 		logger.info("createTableScript")
 
-		partialSql = "CREATE TABLE IF NOT EXISTS '{}' ( ".format(tableName)
+		partialSql = f"CREATE TABLE IF NOT EXISTS '{tableName}' ( "
 		for column in columnHeader:
-			partialSql += "'{}' TEXT ,".format(column)
+			partialSql += f"'{column}' TEXT ,"
 		partialSql = partialSql[:-1]
-		partialSql += ");"	
+		partialSql += ");"
 		return partialSql
 
 	def sqlScript(self, tableName=None, data=None):
 
 		logger.info("insertScript")
 
-		sqlList = list()
-		sqlList.append(self.createTableScript(tableName, columnHeader=data[0]))
+		sqlList = [self.createTableScript(tableName, columnHeader=data[0])]
 		for row in data.items():
-			partialSql = "INSERT INTO '{}' (".format(tableName)
+			partialSql = f"INSERT INTO '{tableName}' ("
 			for column in data[0]:
-				partialSql += "'{}' ,".format(column)
+				partialSql += f"'{column}' ,"
 			partialSql = partialSql[:-1]
 			partialSql += ") VALUES ("
 			for dataRow in row[1]:
-				partialSql += "'{}' ,".format(dataRow)
+				partialSql += f"'{dataRow}' ,"
 			partialSql = partialSql[:-1]
 			partialSql += ");"
 			sqlList.append(partialSql)

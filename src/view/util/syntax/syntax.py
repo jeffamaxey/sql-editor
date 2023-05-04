@@ -84,10 +84,10 @@ class SyntaxMgr(object):
             SyntaxMgr.first = False
             self._extreg = ExtensionRegister()
             self._config = config
-            self._loaded = dict()
+            self._loaded = {}
 
             # Syntax mode extensions
-            self._extensions = dict()   # loaded extensions "py" : PythonMode()
+            self._extensions = {}
 
             self.InitConfig()
 
@@ -109,11 +109,7 @@ class SyntaxMgr(object):
 
         """
         ftype = self._extreg.FileTypeFromExt(ext)
-        lexdat = LANG_MAP.get(ftype)
-        mod = None
-        if lexdat:
-            mod = lexdat[MODULE]
-        return mod
+        return lexdat[MODULE] if (lexdat := LANG_MAP.get(ftype)) else None
 
     def GetLangId(self, ext):
         """Gets the language Id that is associated with the file
@@ -139,10 +135,7 @@ class SyntaxMgr(object):
         @param modname: name of module to lookup
 
         """
-        if modname in self._loaded:
-            return True
-        else:
-            return False
+        return modname in self._loaded
 
     def LoadModule(self, modname):
         """Dynamically loads a module by name. The loading is only
@@ -150,7 +143,7 @@ class SyntaxMgr(object):
         @param modname: name of syntax module to load
 
         """
-        if modname == None:
+        if modname is None:
             return False
         if not self.IsModLoaded(modname):
             try:
@@ -169,9 +162,8 @@ class SyntaxMgr(object):
             return False
         path = os.path.join(self._config, self._extreg.config)
         try:
-            file_h = open(path, "wb")
-            file_h.write(str(self._extreg))
-            file_h.close()
+            with open(path, "wb") as file_h:
+                file_h.write(str(self._extreg))
         except IOError:
             return False
         return True
@@ -188,9 +180,7 @@ class SyntaxMgr(object):
         # The Return Value
         lang = self._extreg.FileTypeFromExt(ext)
         if lang in self._extensions:
-            syn_data = self._extensions[lang]
-            return syn_data
-
+            return self._extensions[lang]
         # Check for extensions that may have been removed
         if lang not in LANG_MAP:
             self._extreg.Remove(lang)
@@ -224,8 +214,6 @@ class SyntaxMgr(object):
                 if modeh.IsOk():
                     sdata = SynExtensionDelegate(modeh)
                     self._extensions[sdata.GetXmlObject().GetLanguage()] = sdata
-                else:
-                    pass
                     #TODO: report error
 
     def SetConfigDir(self, path):
@@ -271,10 +259,7 @@ class SynExtensionDelegate(SyntaxDataBase):
 
         """
         keywords = self._xml.GetKeywords()
-        rwords = list()
-        for sid, words in keywords:
-            rwords.append((sid, u" ".join(words)))
-        return rwords
+        return [(sid, u" ".join(words)) for sid, words in keywords]
 
     def GetProperties(self):
         """Get the Properties List
@@ -307,9 +292,7 @@ def GenLexerMenu():
 
     """
     lex_menu = wx.Menu()
-    f_types = dict()
-    for key in LANG_MAP:
-        f_types[key] = LANG_MAP[key][LANG_ID]
+    f_types = {key: LANG_MAP[key][LANG_ID] for key in LANG_MAP}
     f_order = list(f_types)
 #     f_order.sort(key=unicode.lower)
 
@@ -325,7 +308,7 @@ def GenFileFilters():
     """
     extreg = ExtensionRegister()
     # Convert extension list into a formatted string
-    f_dict = dict()
+    f_dict = {}
     for key, val in extreg.iteritems():
         val.sort()
         if key.lower() == 'makefile':
@@ -334,9 +317,9 @@ def GenFileFilters():
         f_dict[key] = u";*." + u";*.".join(val)
 
     # Build the final list of properly formatted strings
-    filters = list()
+    filters = []
     for key in f_dict:
-        tmp = u" (%s)|%s|" % (f_dict[key][1:], f_dict[key][1:])
+        tmp = f" ({f_dict[key][1:]})|{f_dict[key][1:]}|"
         filters.append(key + tmp)
 #     filters.sort(key=unicode.lower)
     filters.insert(0, u"All Files (*)|*|")
@@ -348,9 +331,7 @@ def GetLexerList():
     @return: list of strings
 
     """ 
-    f_types = LANG_MAP.keys()
-#     f_types.sort(key=unicode.lower)
-    return f_types
+    return LANG_MAP.keys()
 
 #---- Syntax id set ----#
 SYNTAX_IDS = None
@@ -364,12 +345,11 @@ def SyntaxIds():
     if SYNTAX_IDS is not None:
         return SYNTAX_IDS
 
-    syn_ids = list()
-    for item in dir(synglob):
-        if item.startswith("ID_LANG"):
-            syn_ids.append(getattr(synglob, item))
-
-    return syn_ids
+    return [
+        getattr(synglob, item)
+        for item in dir(synglob)
+        if item.startswith("ID_LANG")
+    ]
 
 SYNTAX_IDS = SyntaxIds()
 
@@ -378,7 +358,7 @@ def SyntaxNames():
     @return: list of strings
 
     """
-    syn_list = list()
+    syn_list = []
     for item in dir(synglob):
         if item.startswith("LANG_"):
             val = getattr(synglob, item)
@@ -396,10 +376,7 @@ def GetExtFromId(ext_id):
     """
     extreg = ExtensionRegister()
     ftype = synglob.GetDescriptionFromId(ext_id)
-    rval = u''
-    if len(extreg[ftype]):
-        rval = extreg[ftype][0]
-    return rval
+    return extreg[ftype][0] if len(extreg[ftype]) else u''
 
 def GetIdFromExt(ext):
     """Get the language id from the given file extension

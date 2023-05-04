@@ -111,9 +111,7 @@ class GeneralPreferencePanel(wx.Panel):
     def EvtCheckListBox(self, event):
         index = event.GetSelection()
         label = self.lb.GetString(index)
-        status = 'un'
-        if self.lb.IsChecked(index):
-            status = ''
+        status = '' if self.lb.IsChecked(index) else 'un'
         print ('Box %s is %schecked \n' % (label, status))
         self.lb.SetSelection(index)  # so that (un)checking also selects (moves the highlight)
  

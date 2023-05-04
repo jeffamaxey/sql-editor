@@ -50,13 +50,11 @@ class SVGViewerPanel(wx.Panel):
 
     def setTableDetail(self, tables=None):
         
-        tableDict = dict()
+        tableDict = {}
         logger.debug(tables)
         for table in tables:
             logger.debug(table)
-            columns=list()
-            for col in table.values()[0]:
-                columns.append(col[1])
+            columns = [col[1] for col in table.values()[0]]
             tableDict[table.keys()[0]]=columns
 #         tables['book'] = ['id', 'book_name', ]
 #         tables['author'] = ['id', 'author_name', ]
@@ -66,26 +64,18 @@ class SVGViewerPanel(wx.Panel):
 
     def createGraphviz(self):
 #         self.getTableDetail()
-        nodes = list()
-        idx = 0
-        for  k, columns in self.tables.iteritems():
-            node = list()
-#             print(idx, k, columns)
-            nodeColumnName = dict()
+        nodes = []
+        for idx, (k, columns) in enumerate(self.tables.iteritems()):
             label = ''
             for index, column_name in enumerate(columns):
 #                 print(column_name)
-                label = label + '| <f' + str(index + 1) + '> ' + column_name
-            nodeColumnName['label'] = '<f0> ' + k + label
-#             print(nodeColumnName)
-            node.append('node' + str(idx))
-            node.append(nodeColumnName)
+                label = f'{label}| <f{str(index + 1)}> {column_name}'
+            nodeColumnName = {'label': f'<f0> {k}{label}'}
+            node = [f'node{str(idx)}', nodeColumnName]
             nodes.append(tuple(node))
-            idx += 1
-            
         logger.debug(nodes)
         gd = GraphvizDiagram()
-        
+
         g6 = gd.add_edges(
                           gd.add_nodes(Digraph(format='svg'), nodes
                                        ), [

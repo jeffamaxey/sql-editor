@@ -31,7 +31,7 @@ class CreatingGoToLinePanel(wx.Dialog):
         # contents
         sizer = wx.BoxSizer(wx.VERTICAL)
 
-        label = wx.StaticText(self, -1, "Enter line number (1..{}):".format(numberOfLines))
+        label = wx.StaticText(self, -1, f"Enter line number (1..{numberOfLines}):")
         label.SetHelpText("Enter line number")
         sizer.Add(label, 0, wx.ALIGN_LEFT|wx.ALL, 5)
 
@@ -82,7 +82,7 @@ class CreatingGoToLinePanel(wx.Dialog):
 
         self.SetSizer(sizer)
 #         sizer.Fit(self)
-        
+
         self.parent = parent
      
 #---------------------------------------------------------------------------

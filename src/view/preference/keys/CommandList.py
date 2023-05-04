@@ -128,27 +128,21 @@ class CommandKeyListCtrlPanel(wx.Panel, listmix.ColumnSorterMixin):
         wx.GetApp().GetTopWindow().LoadDemo("ListCtrl")
 
     def PopulateList(self):
-        if 0:
-            # for normal, simple columns, you can add them like this:
-            self.list.InsertColumn(0, "Command")
-            self.list.InsertColumn(1, "Binding", wx.LIST_FORMAT_RIGHT)
-            self.list.InsertColumn(2, "Category")
-        else:
-            # but since we want images on the column header we have to do it the hard way:
-            info = wx.ListItem()
-            info.m_mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT
-            info.m_image = 1
-            info.m_format = 0
-            info.m_text = "Command"
-            self.list.InsertColumn(0, info)
+        # but since we want images on the column header we have to do it the hard way:
+        info = wx.ListItem()
+        info.m_mask = wx.LIST_MASK_TEXT | wx.LIST_MASK_IMAGE | wx.LIST_MASK_FORMAT
+        info.m_image = 1
+        info.m_format = 0
+        info.m_text = "Command"
+        self.list.InsertColumn(0, info)
 
-            info.m_format = wx.LIST_FORMAT_RIGHT
-            info.m_text = "Binding"
-            self.list.InsertColumn(1, info)
+        info.m_format = wx.LIST_FORMAT_RIGHT
+        info.m_text = "Binding"
+        self.list.InsertColumn(1, info)
 
-            info.m_format = 0
-            info.m_text = "Category"
-            self.list.InsertColumn(2, info)
+        info.m_format = 0
+        info.m_text = "Category"
+        self.list.InsertColumn(2, info)
 
         items = musicdata.items()
         path = os.path.abspath(__file__)
@@ -156,17 +150,14 @@ class CommandKeyListCtrlPanel(wx.Panel, listmix.ColumnSorterMixin):
         while tail != 'src':
             path = os.path.abspath(os.path.join(path, '..'))
             head, tail = os.path.split(path)
-            
+
         imageLocation=os.path.join(path,  "images")
-        count=0
-        for key, data in items:
+        for count, (key, data) in enumerate(items):
             image = wx.Image(os.path.join(imageLocation, data[3]), wx.BITMAP_TYPE_PNG).ConvertToBitmap()
             index = self.list.InsertItem(count, data[0], self.il.Add(image))
             self.list.SetItem(index, 1, data[1])
             self.list.SetItem(index, 2, data[2])
             self.list.SetItemData(index, key)
-            count +=1
-
         self.list.SetColumnWidth(0, wx.LIST_AUTOSIZE)
         self.list.SetColumnWidth(1, wx.LIST_AUTOSIZE)
         self.list.SetColumnWidth(2, 100)

@@ -49,14 +49,13 @@ class FancySequenceMatcher(difflib.SequenceMatcher):
             if tag != "replace" or ahi-alo==bhi-blo:
                 yield tag, alo, ahi, blo, bhi
             else:
-                for ops in self._fancy_replace(a, alo, ahi, b, blo, bhi):
-                    yield ops
+                yield from self._fancy_replace(a, alo, ahi, b, blo, bhi)
     
     def _fancy_replace(self, a, alo, ahi, b, blo, bhi):
         "Search 'replace' block for *similar* lines (synch point)"
         best_ratio = self.BEST_RATIO
         eqi, eqj = None, None   # 1st indices of equal lines (if any)
-    
+
         # several lines, find modified lines (not inserted/deleted)
         cruncher = difflib.SequenceMatcher(self.isjunk)
         for j in range(blo, bhi):
@@ -71,8 +70,8 @@ class FancySequenceMatcher(difflib.SequenceMatcher):
                 cruncher.set_seq1(ai)
                 # check if lines are similar (optimized):
                 if cruncher.real_quick_ratio() > best_ratio and \
-                      cruncher.quick_ratio() > best_ratio and \
-                      cruncher.ratio() > best_ratio:
+                          cruncher.quick_ratio() > best_ratio and \
+                          cruncher.ratio() > best_ratio:
                     best_ratio, best_i, best_j = cruncher.ratio(), i, j
         if best_ratio < self.CUTOFF:
             # no non-identical "pretty close" pair
@@ -91,9 +90,7 @@ class FancySequenceMatcher(difflib.SequenceMatcher):
         # a[best_i] very similar to b[best_j]; eqi is None if they're not equal
 
         # pump out diffs from before the synch point
-        for ops in self._fancy_helper(a, alo, best_i, b, blo, best_j):
-            yield ops
-
+        yield from self._fancy_helper(a, alo, best_i, b, blo, best_j)
         if eqi is None:
             # pump out the synched lines
             yield 'replace', best_i, best_i+1, best_j, best_j+1
@@ -102,23 +99,19 @@ class FancySequenceMatcher(difflib.SequenceMatcher):
             yield 'equal', best_i, best_i+1, best_j, best_j+1
 
         # pump out diffs from after the synch point
-        for ops in self._fancy_helper(a, best_i+1, ahi, b, best_j+1, bhi):
-            yield ops
+        yield from self._fancy_helper(a, best_i+1, ahi, b, best_j+1, bhi)
                                
     def _fancy_helper(self, a, alo, ahi, b, blo, bhi):
         "split ops block (to and from a synch line)"
         g = []
         if alo < ahi:
             if blo < bhi:
-                for ops in self._fancy_replace(a, alo, ahi, b, blo, bhi):        
-                    yield ops
-                #yield 'replace', alo, ahi, blo, bhi
+                yield from self._fancy_replace(a, alo, ahi, b, blo, bhi)
+                        #yield 'replace', alo, ahi, blo, bhi
             else:
                 yield 'delete', alo, ahi, blo, blo
         elif blo < bhi:
             yield 'insert', ahi, ahi, blo, bhi
-        else:
-            pass # discard alo == ahi  blo == bhi
 
     def _intraline_diffs(self, a, b):
         "intraline difference marking"
@@ -151,18 +144,14 @@ def track_lines_changes(old, new, modified_equals=False):
     for opcode, alo, ahi, blo, bhi in s.get_opcodes():
         #print "%6s a[%d:%d] b[%d:%d]" % (opcode, ahi, ahi, blo, bhi), old[alo:ahi], new[blo:bhi]
         if opcode == "insert":
-            for lno in range(blo, bhi):
-                ret.append((None, lno))
+            ret.extend((None, lno) for lno in range(blo, bhi))
         if opcode == "replace" and not modified_equals:
-            for lno in range(blo, bhi):
-                ret.append((None, lno))
+            ret.extend((None, lno) for lno in range(blo, bhi))
         if opcode == "equal" or (opcode == "replace" and modified_equals):
             old_lno = range(alo, ahi)
-            for i, lno in enumerate(range(blo, bhi)):
-                ret.append((old_lno[i], lno))
+            ret.extend((old_lno[i], lno) for i, lno in enumerate(range(blo, bhi)))
         if opcode == "delete":
-            for i, lno in enumerate(range(alo, ahi)):
-                ret.append((lno, None))
+            ret.extend((lno, None) for lno in range(alo, ahi))
     return ret
 
 def _test():

@@ -108,7 +108,7 @@ class EditraXml(sax.ContentHandler):
         self._ok = False             # Did the object load correctly
 
         self._context = None         # Current parse context
-        self._reg_handler = dict()   # Registered parse handlers
+        self._reg_handler = {}
 
     def __eq__(self, other):
         return self.GetXml() == other.GetXml()
@@ -125,10 +125,6 @@ class EditraXml(sax.ContentHandler):
         elif name in self._reg_handler:
             self._context = self._reg_handler.get(name)
             self._context.startElement(name, attrs)
-        else:
-            # Unknown tag
-            # raise?
-            pass
 
     def endElement(self, name):
         if self._context is not None:
@@ -137,17 +133,10 @@ class EditraXml(sax.ContentHandler):
             else:
                 # Delegate to registered handler
                 self._context.endElement(name)
-        else:
-            # Unknown tag ending
-            pass
 
     def characters(self, chars):
-        if not chars.isspace():
-            if self._context is not None:
-                self._context.characters(chars)
-            else:
-                # No current context or context is self
-                pass
+        if not chars.isspace() and self._context is not None:
+            self._context.characters(chars)
 
     def GetXml(self):
         """Get the xml representation of this object
@@ -176,14 +165,14 @@ class EditraXml(sax.ContentHandler):
         @return: string
 
         """
-        return u"<%s>" % self.name
+        return f"<{self.name}>"
 
     def GetEndTag(self):
         """Get the closing tag
         @return: string
 
         """
-        return u"</%s>" % self.name
+        return f"</{self.name}>"
 
     def LoadFromDisk(self):
         """Load the object from from disk
@@ -295,7 +284,7 @@ class EditraXml(sax.ContentHandler):
 
         """
         tag = handler.GetName()
-        assert tag not in self._reg_handler, "%s already registered!" % tag
+        assert tag not in self._reg_handler, f"{tag} already registered!"
         handler.SetLevel(self.Level + 1)
         self._reg_handler[tag] = handler
 
@@ -477,14 +466,14 @@ class Syntax(EditraXml):
         self.langid = u"ID_LANG_TXT"
         self.lexstr = u"STC_LEX_NULL"
         self.lexer = stc.STC_LEX_NULL
-        self.file_ext = list()
+        self.file_ext = []
 
         # Sub Xml Objects
         self.keywords = KeywordList()
         self.synspec = SyntaxSpecList()
         self.props = PropertyList()
         self.features = FeatureList()
-        self.comment = list()
+        self.comment = []
 
         # Setup
         self.SetName(EXML_SYNTAX)
@@ -499,10 +488,7 @@ class Syntax(EditraXml):
             val = attrs.get(EXML_VALUE, '')
             tmp = val.split()
             # Trailing space may be significant for some comments
-            if len(tmp) == 1:
-                comment = [val,]
-            else:
-                comment = tmp
+            comment = [val,] if len(tmp) == 1 else tmp
             self.comment = comment
         elif name == EXML_ASSOCIATIONS:
             self.file_ext = attrs.get(EXML_VALUE, '').split()
@@ -512,7 +498,7 @@ class Syntax(EditraXml):
             assert langid.startswith(u"ID_LANG_"), "id must start with ID_LANG_"
             lexer = attrs.get(EXML_LEXER, 'STC_LEX_NULL')
             lexval = getattr(stc, lexer, None)
-            assert lexval is not None, "Invalid Lexer: %s" % lexer
+            assert lexval is not None, f"Invalid Lexer: {lexer}"
             self.language = lang
             self.langid = langid
             self.lexstr = lexer
@@ -603,7 +589,7 @@ class KeywordList(EditraXml):
 
         # Attributes
         self._current = None
-        self._keywords = dict() # { index : word_list }
+        self._keywords = {}
 
         # Setup
         self.SetName(EXML_KEYWORDLIST)
@@ -614,10 +600,8 @@ class KeywordList(EditraXml):
             assert idx is not None, "value attribute not set"
             idx = int(idx)
             assert idx not in self._keywords, "Duplicate index set %d" % idx
-            self._keywords[idx] = list()
+            self._keywords[idx] = []
             self._current = self._keywords[idx]
-        else:
-            pass
 
     def endElement(self, name):
         if name == EXML_KEYWORDS:
@@ -625,16 +609,15 @@ class KeywordList(EditraXml):
 
     def characters(self, chars):
         chars = chars.strip().split()
-        if self._current is not None:
-            if len(chars):
-                self._current.extend(chars)
+        if self._current is not None and len(chars):
+            self._current.extend(chars)
 
     def GetSubElements(self):
         """Get the keyword list elements"""
         xml = u""
-        tag = u"<%s %s=" % (EXML_KEYWORDS, EXML_VALUE)
+        tag = f"<{EXML_KEYWORDS} {EXML_VALUE}="
         tag += "\"%s\">"
-        end = u"</%s>" % EXML_KEYWORDS
+        end = f"</{EXML_KEYWORDS}>"
         ident = self.GetIndentationStr() + (self.Indentation * u" ")
         for key in sorted(self._keywords.keys()):
             xml += os.linesep + ident
@@ -673,7 +656,7 @@ class SyntaxSpecList(EditraXml):
         EditraXml.__init__(self)
 
         # Attributes
-        self._specs = list()
+        self._specs = []
 
         # Setup
         self.SetName(EXML_SYNSPECLIST)
@@ -688,19 +671,15 @@ class SyntaxSpecList(EditraXml):
             else:
                 # Scintilla Value
                 style_id = getattr(stc, lid, None)
-                assert style_id is not None, "Invalid STC Value: %s" % lid
-                assert isinstance(style_id, int), "Invalid ID: %s" % lid
+                assert style_id is not None, f"Invalid STC Value: {lid}"
+                assert isinstance(style_id, int), f"Invalid ID: {lid}"
 
             self._specs.append((style_id, attrs.get(EXML_TAG, 'default_style')))
-        else:
-            # Unknown Tag
-            # Raise?
-            pass
 
     def GetSubElements(self):
         """Get the xml for all the syntax spec elements"""
         xml = u""
-        tag = u"<%s %s=" % (EXML_SYNTAXSPEC, EXML_VALUE)
+        tag = f"<{EXML_SYNTAXSPEC} {EXML_VALUE}="
         tag += ("\"%s\" " + EXML_TAG + "=\"%s\"/>")
         ident = self.GetIndentationStr() + (self.Indentation * u" ")
         for spec in self._specs:
@@ -725,23 +704,20 @@ class PropertyList(EditraXml):
         EditraXml.__init__(self)
 
         # Attributes
-        self.properties = list()
+        self.properties = []
 
         # Setup
         self.SetName(EXML_PROPERTYLIST)
 
     def startElement(self, name, attrs):
         if name == EXML_PROPERTY:
-            prop = attrs.get(EXML_VALUE, '')
-            if prop:
+            if prop := attrs.get(EXML_VALUE, ''):
                 enable = attrs.get(EXML_ENABLE, '0')
                 self.properties.append((prop, enable))
-        else:
-            pass
 
     def GetSubElements(self):
         xml = u""
-        tag = u"<%s %s=" % (EXML_PROPERTY, EXML_VALUE)
+        tag = f"<{EXML_PROPERTY} {EXML_VALUE}="
         tag += ("\"%s\" " + EXML_ENABLE + "=\"%s\"/>")
         ident = self.GetIndentationStr() + (self.Indentation * u" ")
         for prop in self.properties:
@@ -771,7 +747,7 @@ class FeatureList(EditraXml):
         EditraXml.__init__(self)
 
         # Attributes
-        self._features = dict()
+        self._features = {}
 
         # Setup
         self.SetName(EXML_FEATURELIST)
@@ -789,7 +765,7 @@ class FeatureList(EditraXml):
 
     def GetSubElements(self):
         xml = u""
-        tag = u"<%s %s=" % (EXML_FEATURE, EXML_METHOD)
+        tag = f"<{EXML_FEATURE} {EXML_METHOD}="
         tag += ("\"%s\" " + EXML_SOURCE + "=\"%s\"/>")
         ident = self.GetIndentationStr() + (self.Indentation * u" ")
         for feature in self._features.iteritems():
@@ -804,11 +780,8 @@ class FeatureList(EditraXml):
         @param fet: string (module name)
 
         """
-        feature = None
         src = self._features.get(fet, None)
-        if src is not None:
-            feature = src
-        return feature
+        return src if src is not None else None
 
 #----------------------------------------------------------------------------#
 

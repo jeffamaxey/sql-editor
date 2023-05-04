@@ -19,25 +19,25 @@ class PrefrencesTreePanel(wx.Panel):
         wx.Panel.__init__(self, parent, id=-1)
         self.parent = parent
 #         self.fileOperations = FileOperations()
-        self.connDict = dict()
+        self.connDict = {}
         vBox = wx.BoxSizer(wx.VERTICAL)
         ####################################################################
         self.treeMap = {}
         self.tree = PrefrencesBaseTreePanel(self)
-        
+
         self.filter = wx.SearchCtrl(self, style=wx.TE_PROCESS_ENTER)
         self.filter.SetDescriptiveText("Type filter search text")
         self.filter.ShowCancelButton(True)
         self.filter.Bind(wx.EVT_TEXT, self.RecreateTree)
         self.filter.Bind(wx.EVT_SEARCHCTRL_CANCEL_BTN, lambda e: self.filter.SetValue(''))
         self.filter.Bind(wx.EVT_TEXT_ENTER, self.OnSearch)
-        
+
         self.tree.Bind(wx.EVT_TREE_ITEM_EXPANDED, self.OnItemExpanded)
         self.tree.Bind(wx.EVT_TREE_ITEM_COLLAPSED, self.OnItemCollapsed)
         self.tree.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnSelectionChanged)
         self.tree.Bind(wx.EVT_LEFT_DOWN, self.OnTreeLeftDown)
 #         self.tree.SelectItem(self.root)
-        
+
         searchMenu = wx.Menu()
         item = searchMenu.AppendRadioItem(-1, "Full search")
         self.Bind(wx.EVT_MENU, self.OnSearchMenu, item)
@@ -50,16 +50,14 @@ class PrefrencesTreePanel(wx.Panel):
         vBox.Add(self.tree , 1, wx.EXPAND | wx.ALL)
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(vBox, 1, wx.EXPAND , 0)
-        
+
         self.SetSizer(sizer)
 
     def OnSearchMenu(self, event):
 
         # Catch the search type (name or content)
         searchMenu = self.filter.GetMenu().GetMenuItems()
-        fullSearch = searchMenu[1].IsChecked()
-        
-        if fullSearch:
+        if fullSearch := searchMenu[1].IsChecked():
             self.OnSearch()
         else:
             self.RecreateTree()        
@@ -95,23 +93,20 @@ class PrefrencesTreePanel(wx.Panel):
     def RecreateTree(self, evt=None):
         searchMenu = self.filter.GetMenu().GetMenuItems()
         fullSearch = searchMenu[1].IsChecked()
-            
-        if evt:
-            if fullSearch:
-                # Do not`scan all the demo files for every char
-                # the user input, use wx.EVT_TEXT_ENTER instead
-                return
+
+        if evt and fullSearch:
+            # Do not`scan all the demo files for every char
+            # the user input, use wx.EVT_TEXT_ENTER instead
+            return
 
         expansionState = self.tree.GetExpansionState()
 
         current = None
-        item = self.tree.GetSelection()
-        if item:
-            prnt = self.tree.GetItemParent(item)
-            if prnt:
+        if item := self.tree.GetSelection():
+            if prnt := self.tree.GetItemParent(item):
                 current = (self.tree.GetItemText(item),
                            self.tree.GetItemText(prnt))
-                    
+
         self.tree.Freeze()
         self.tree.DeleteAllItems()
         self.root = self.tree.AddRoot("Preferences")
@@ -127,13 +122,11 @@ class PrefrencesTreePanel(wx.Panel):
         # was the size of the same label in the default font.
         if 'wxMSW' not in wx.PlatformInfo:
             treeFont.SetPointSize(treeFont.GetPointSize() + 2)
-            
+
         treeFont.SetWeight(wx.BOLD)
         catFont.SetWeight(wx.BOLD)
         self.tree.SetItemFont(self.root, treeFont)
-        
-        firstChild = None
-        selectItem = None
+
         filter = self.filter.GetValue()
         count = 0
         treeSearch = TreeSearch()
@@ -143,19 +136,19 @@ class PrefrencesTreePanel(wx.Panel):
         treeItems = treeSearch.searchedNodes(dataList=perferenceTreeList, searchText=searchText)
 
         self.constructNode(parent=self.root, treeData=treeItems)
-                    
+
         self.tree.Expand(self.root)
-        if firstChild:
+        if firstChild := None:
             self.tree.Expand(firstChild)
         if filter:
             self.tree.ExpandAll()
         elif expansionState:
             self.tree.SetExpansionState(expansionState)
-        if selectItem:
+        if selectItem := None:
             self.skipLoad = True
             self.tree.SelectItem(selectItem)
             self.skipLoad = False
-        
+
         self.tree.Thaw()
         self.searchItems = {}
 
@@ -182,7 +175,7 @@ class PrefrencesTreePanel(wx.Panel):
         pt = event.GetPosition();
         item, flags = self.tree.HitTest(pt)
         if item and item == self.tree.GetSelection():
-            logger.debug(self.tree.GetItemText(item) + " Overview")
+            logger.debug(f"{self.tree.GetItemText(item)} Overview")
         event.Skip()
 
     #---------------------------------------------
@@ -195,8 +188,7 @@ class PrefrencesTreePanel(wx.Panel):
         item = event.GetItem()
         itemText = self.tree.GetItemText(item)
         logger.debug(itemText)
-        centerPane = self.GetTopLevelParent()._mgr.GetPane("center")
-        if centerPane:
+        if centerPane := self.GetTopLevelParent()._mgr.GetPane("center"):
             logger.debug('centerPane')
             rightPanelItem = None
             avalialbe = False
@@ -208,7 +200,7 @@ class PrefrencesTreePanel(wx.Panel):
                     avalialbe = True
                 else:
                     panel.Hide()
-                    
+
             if not avalialbe:
                 centerPane.window.addPanel(name=itemText)
             centerPane.window.Layout()
@@ -269,8 +261,7 @@ class PrefrencesBaseTreePanel(ExpansionState, TreeCtrl):
             
     def AppendItem(self, parent, text, image=-1, wnd=None):
 
-        item = TreeCtrl.AppendItem(self, parent, text, image=image)
-        return item
+        return TreeCtrl.AppendItem(self, parent, text, image=image)
             
     def BuildTreeImageList(self):
 #         imgList = wx.ImageList(16, 16)
@@ -287,16 +278,14 @@ class PrefrencesBaseTreePanel(ExpansionState, TreeCtrl):
             self._il = None
         self._il = wx.ImageList(16, 16)
         self.SetImageList(self._il)
-        
+
         self.ImageList.RemoveAll()
         self.iconsDictIndex = {}
-        count = 0
         self.fileOperations = FileOperations()
-        for imageName in ['preference.png', 'folder.png', 'folder_view.png', 'fileType_filter.png', 'usb.png', 'stop.png',
-                          'java.png', 'python_module.png', 'xml.png', 'folderType_filter.png']:
+        for count, imageName in enumerate(['preference.png', 'folder.png', 'folder_view.png', 'fileType_filter.png', 'usb.png', 'stop.png',
+                          'java.png', 'python_module.png', 'xml.png', 'folderType_filter.png']):
             self.ImageList.Add(self.fileOperations.getImageBitmap(imageName=imageName))
             self.iconsDictIndex[imageName] = count
-            count += 1
 
     def GetItemIdentity(self, item):
         return self.GetItemData(item)

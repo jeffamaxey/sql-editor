@@ -151,7 +151,7 @@ class CreatingFindAndReplacePanel(wx.Panel):
         self.SetAutoLayout(True)
 
     def onFindClicked(self, event):
-        logger.debug('onFindClicked: ' + self.findText)
+        logger.debug(f'onFindClicked: {self.findText}')
 
     def onReplaceClicked(self, event):
         logger.debug('onReplaceClicked')

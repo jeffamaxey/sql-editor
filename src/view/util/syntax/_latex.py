@@ -85,10 +85,7 @@ class SyntaxData(syndata.SyntaxDataBase):
 
     def GetSyntaxSpec(self):
         """Syntax Specifications """
-        if self.LangId == synglob.ID_LANG_TEX:
-            return SYNTAX_ITEMS1
-        else:
-            return SYNTAX_ITEMS2
+        return SYNTAX_ITEMS1 if self.LangId == synglob.ID_LANG_TEX else SYNTAX_ITEMS2
 
     def GetCommentPattern(self):
         """Returns a list of characters used to comment a block of code """

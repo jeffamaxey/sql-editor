@@ -4,8 +4,9 @@ Created on 04-Feb-2017
 @author: vijay
 '''
 
+
 keyword = [
-         
+
 'ABORT'
 , 'ACTION'
 , 'ADD'
@@ -131,6 +132,3 @@ keyword = [
 , 'WITHOUT'
 
          ]
-
-if __name__ == '__main__':
-    pass

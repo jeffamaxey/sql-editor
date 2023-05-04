@@ -67,23 +67,21 @@ class CreateDatabase():
         '''
         logger.debug('addSingleBookData')
         try:
-            single = {}
             duplicate = {}
             os.chdir(self.libraryPath)
-            duplicateBooks = list()
             addDatabase = True
-            b = self.readJsonFile(dirName=dirName)
-            if b:
+            if b := self.readJsonFile(dirName=dirName):
                 book = self.createBookFromJson(bookJson=b)
                 book.bookPath = os.path.join(self.libraryPath , dirName)
+                single = {}
                 if book.isbn_13: 
                     if not single.has_key(book.isbn_13):
                         single[book.isbn_13] = book
-                        
+
                     else:
                         duplicate[book.isbn_13] = book
                         addDatabase = False
-                        duplicateBooks.append(duplicate)
+                        duplicateBooks = [duplicate]
                 if addDatabase:
                     self.session.add(book)
                 self.session.commit()
@@ -95,7 +93,7 @@ class CreateDatabase():
         logger.debug('addingData')
         directory_name = self.libraryPath
         os.chdir(directory_name)
-        listOfDir = list()
+        listOfDir = []
 #         listOfDir = [ name for name in os.listdir(directory_name) if os.path.isdir(os.path.join(directory_name, name)) ]
         for name in os.listdir(directory_name):
             if os.path.isdir(os.path.join(directory_name, name)) :
@@ -107,11 +105,11 @@ class CreateDatabase():
         if listOfDir:
             listOfDir.sort(key=int)
         one = ''
-       
-        try:    
+
+        try:
             single = {}
             duplicate = {}
-            self.duplicateBooks = list()
+            self.duplicateBooks = []
             for dirName in listOfDir:
                 addDatabase = True
                 b = self.readJsonFile(dirName=dirName)
@@ -120,7 +118,7 @@ class CreateDatabase():
                 if book.isbn_13: 
                     if not single.has_key(book.isbn_13):
                         single[book.isbn_13] = book
-                        
+
                     else:
                         duplicate[book.isbn_13] = book
                         addDatabase = False
@@ -129,25 +127,27 @@ class CreateDatabase():
                     self.session.add(book)
             self.session.commit()
             logger.debug('number of duplicateBooks: %s', len(self.duplicateBooks))
-    
+
         except Exception as e:
             logger.error(e, exc_info=True)
             self.session.rollback();
         logger.debug('data loaded') 
     
     def createBookFromJson(self, bookJson=None):
-        logger.debug('createBookFromJson') 
+        logger.debug('createBookFromJson')
         book = Book()
         for k in bookJson:
             if not isinstance(bookJson[k], list):
                 if k in ['publishedOn', 'createdOn']:
                     if bookJson[k]:
-                        book.__dict__[k] = datetime.datetime.strptime(bookJson[k][0:19], "%Y-%m-%d %H:%M:%S")
+                        book.__dict__[k] = datetime.datetime.strptime(
+                            bookJson[k][:19], "%Y-%m-%d %H:%M:%S"
+                        )
                 else:
                     book.__dict__[k] = bookJson[k]
 
             else:
-                authorList = list()
+                authorList = []
                 for a in bookJson[k]:
                     author = Author()
                     for aKey in a:
@@ -225,18 +225,25 @@ class CreateDatabase():
     
     def findBookByIsbn(self, isbn_13):
         logger.debug('findBookByIsbn : %s', isbn_13)
-        bs = self.session.query(Book).filter(Book.isbn_13 == isbn_13).first()
-        return bs
+        return self.session.query(Book).filter(Book.isbn_13 == isbn_13).first()
 
     def findBookByNextMaxId(self, bookId):
         logger.debug('findBookByNextMaxId bookId: %s', bookId)
-        bs = self.session.query(Book).filter(Book.id > bookId).order_by(Book.id.asc()).first()
-        return bs
+        return (
+            self.session.query(Book)
+            .filter(Book.id > bookId)
+            .order_by(Book.id.asc())
+            .first()
+        )
 
     def findBookByPreviousMaxId(self, bookId):           
         logger.debug('findBookByPreviousMaxId bookId: %s', bookId)
-        bs = self.session.query(Book).filter(Book.id < bookId).order_by(Book.id.desc()).first()
-        return bs      
+        return (
+            self.session.query(Book)
+            .filter(Book.id < bookId)
+            .order_by(Book.id.desc())
+            .first()
+        )      
       
     def removeBook(self, book=None):
         '''
@@ -303,8 +310,17 @@ class CreateDatabase():
         logger.debug('findBySimlarBookName bookName: %s', bookName)
         try:
             if bookName:
-                countQuery = self.session.query(Book).filter(Book.bookName.ilike('%' + bookName + '%')).count()
-                query = self.session.query(Book).filter(Book.bookName.ilike('%' + bookName + '%')).limit(limit).offset(offset)
+                countQuery = (
+                    self.session.query(Book)
+                    .filter(Book.bookName.ilike(f'%{bookName}%'))
+                    .count()
+                )
+                query = (
+                    self.session.query(Book)
+                    .filter(Book.bookName.ilike(f'%{bookName}%'))
+                    .limit(limit)
+                    .offset(offset)
+                )
 #                 .order_by(Book.id.desc())
                 books = query.all()
                 return books, countQuery
@@ -314,21 +330,25 @@ class CreateDatabase():
     def findByIsbn_13Name(self, isbn_13=None):
         logger.debug('findBySimlarBookName isbn_13: %s', isbn_13)
         if isbn_13:
-            query = self.session.query(Book).filter(Book.isbn_13.ilike('%' + isbn_13 + '%'))
-            books = query.all()
-            return books
+            query = self.session.query(Book).filter(Book.isbn_13.ilike(f'%{isbn_13}%'))
+            return query.all()
 
     def findDuplicateBook(self):
         logger.debug('findDuplicateBook ')
-        books = self.session.query(Book).group_by(Book.isbn_13).having(func.count(Book.isbn_13) > 1).order_by(Book.isbn_13.desc())
-        return books
+        return (
+            self.session.query(Book)
+            .group_by(Book.isbn_13)
+            .having(func.count(Book.isbn_13) > 1)
+            .order_by(Book.isbn_13.desc())
+        )
     
     def findBookByFileName(self, bookFileName):
         logger.debug('findBySimlarBookName bookFileName: %s', bookFileName)
         if bookFileName:
-            query = self.session.query(Book).filter(Book.bookFileName.ilike('%' + bookFileName + '%'))
-            books = query.all()
-            return books
+            query = self.session.query(Book).filter(
+                Book.bookFileName.ilike(f'%{bookFileName}%')
+            )
+            return query.all()
         
     def findBook(self, book=None):
         '''
@@ -338,10 +358,14 @@ class CreateDatabase():
         logger.debug('findBook')
         books = None
         if book.isbn_13:
-            query = self.session.query(Book).filter(Book.isbn_13.ilike('%' + book.isbn_13 + '%'))
+            query = self.session.query(Book).filter(
+                Book.isbn_13.ilike(f'%{book.isbn_13}%')
+            )
             books = query.all()
         if book.bookName:
-            query = self.session.query(Book).filter(Book.bookName.ilike('%' + book.bookName + '%'))
+            query = self.session.query(Book).filter(
+                Book.bookName.ilike(f'%{book.bookName}%')
+            )
             books = query.all()
         return books
 
@@ -353,7 +377,7 @@ class CreateDatabase():
         logger.debug(sql)
         logger.debug(f'getMaxBookID sql: {sql} ')
         maxBookId = self.session.execute(sql).first()
-        if maxBookId == None:
+        if maxBookId is None:
             maxBookId = [0]
         logger.debug(f'maxBookId: {maxBookId[0]}')
         return int(maxBookId[0])
@@ -367,7 +391,7 @@ if __name__ == '__main__':
     libraryPath = r'/docs/new/library'
     if not os.path.exists(libraryPath):
         print('no workspace')
-        
+
     try:
         createdb = CreateDatabase(libraryPath=libraryPath)
 #         createdb.creatingDatabase()
@@ -378,9 +402,3 @@ if __name__ == '__main__':
 #         createdb.findAllBook()
     except Exception as e:
         print(e)
-#     for b in books:
-#         print b.isbn_13, b.id
-
-#         createdb.removeBook(b)
-
-    pass

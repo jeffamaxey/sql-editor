@@ -101,7 +101,7 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
         self.findData = wx.FindReplaceData()
         self.popmenu = None
         self.frame = None
-        self.adviceList = list()
+        self.adviceList = []
         self.SetHighlightGuide(1)
 #         self.CmdKeyAssign(ord('B'), stc.STC_SCMOD_CTRL, stc.STC_CMD_ZOOMIN)
 #         self.CmdKeyAssign(ord('N'), stc.STC_SCMOD_CTRL, stc.STC_CMD_ZOOMOUT)
@@ -111,8 +111,7 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
 #         self.SetKeyWords(0, " ".join(keyword.kwlist))
         lowerKeyword = [element.lower() for element in SqliteKeywords.keyword]
         upperKeyword = [element.upper() for element in SqliteKeywords.keyword]
-        keywords = list()
-        keywords.extend(lowerKeyword)
+        keywords = list(lowerKeyword)
         keywords.extend(upperKeyword)
         logger.debug("keywords: %s", keywords)
         self.SetKeyWords(0, " ".join(keywords))
@@ -152,8 +151,11 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
         # set style
 #        font = wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
         font = wx.Font(8, wx.TELETYPE, wx.NORMAL, wx.NORMAL, True)
-        self.StyleSetSpec(stc.STC_STYLE_DEFAULT, "face:%s,size:10" % font.GetFaceName())
-        self.StyleSetSpec(stc.STC_STYLE_LINENUMBER, "back:#AAFFAA,face:%s,size:10" % font.GetFaceName())
+        self.StyleSetSpec(stc.STC_STYLE_DEFAULT, f"face:{font.GetFaceName()},size:10")
+        self.StyleSetSpec(
+            stc.STC_STYLE_LINENUMBER,
+            f"back:#AAFFAA,face:{font.GetFaceName()},size:10",
+        )
         # Global default styles for all languages
 #         self.StyleSetSpec(stc.STC_STYLE_DEFAULT,     "face:%(helv)s,size:%(size)d" % faces)
         self.StyleClearAll()  # Reset all to be like the default
@@ -285,10 +287,7 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
         """"""
         text = self.GetSelectedText()
         logger.debug(f"copyClipboard: {text}")
-        if self.SelectionIsRectangle():
-            self.selection_column_mode = True
-        else:
-            self.selection_column_mode = False
+        self.selection_column_mode = bool(self.SelectionIsRectangle())
         stc.StyledTextCtrl.Copy(self)
 
         self.dataObj = wx.TextDataObject()
@@ -322,19 +321,10 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
                 if lineText.startswith('-- '):
                     replaceText = lineText.replace('-- ', '')
                 else:
-                    replaceText = '-- ' + lineText
+                    replaceText = f'-- {lineText}'
                 completeTextArray[line] = replaceText
                 self.SetText('\n'.join(completeTextArray))
                 print(completeText)
-#                 self.MoveCaretInsideView()
-#                 self.SetText()
-
-#         elif event.ControlDown() and  key == 67:
-#             logger.debug('ctrl+C %s', self.GetSelectedText())
-#             self.copyClipboard(text=self.GetSelectedText())
-#             if key == 86:
-#                 self.Paste()
-
         elif event.ControlDown() and  key == 76:
             logger.debug(f'ctrl+L {self.GetSelectedText()}', )
             dlg = CreatingGoToLinePanel(self, -1, title="Go to Line", size=(485, 192),
@@ -355,7 +345,6 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
                 logger.debug("You pressed Cancel\n")
 
             dlg.Destroy()
-#             app.MainLoop()
         elif event.ControlDown() and  key == 86:
             logger.debug('ctrl+V : paste')
             self.Paste()
@@ -371,15 +360,15 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
             logger.debug('Ctrl+Y: Redo')
             self.Redo()
             event.Skip()
-#         elif event.ShiftDown() and key == 307:
-#             logger.debug('Shift+down')
         elif key in (314, 315, 316, 317):
             line = self.GetCurrentLine()
             lineText, column = self.GetCurLine()
             logger.debug('left right up down. lineText: %s line: %s column:%s', lineText, line, column)
 #             self.statusbar.SetStatusText(self.getCurrentCursorPosition(), 0)
             if hasattr(self.GetTopLevelParent(), 'statusbar'):
-                self.GetTopLevelParent().statusbar.SetStatusText("Line " + str(line) + " , Column " + str(column), 0)
+                self.GetTopLevelParent().statusbar.SetStatusText(
+                    f"Line {str(line)} , Column {str(column)}", 0
+                )
 
 #     def duplicateLine(self, lineText, lineNo):
 #         print('duplicateLine', lineText)
@@ -405,7 +394,7 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
             logger.debug(selectedText)
             # lineNo = self.GetCurrentLine()
             lineText, column = self.GetCurLine()
-            if selectedText != None and selectedText != '':
+            if selectedText not in [None, '']:
                 self.AddText(f'\n{selectedText}')
             else:
                 self.AddText(f'\n{lineText}')
@@ -506,12 +495,9 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
 
         et = evt.GetEventType()
 
-        if et in map:
-            evtType = map[et]
-        else:
-            evtType = "**Unknown Event Type**"
+        evtType = map.get(et, "**Unknown Event Type**")
         if et in [wx.wxEVT_COMMAND_FIND_REPLACE]:
-            replaceTxt = "Replace text: %s" % evt.GetReplaceString()
+            replaceTxt = f"Replace text: {evt.GetReplaceString()}"
 #             self.SetText(re.sub(findstring, evt.GetReplaceString(), self.GetText(), count=1, flags=re.I))
             backward = not (evt.GetFlags() & wx.FR_DOWN)
             if backward:
@@ -521,7 +507,6 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
                 start = self.GetSelection()[1]
                 loc = textstring.find(findstring, start)
             if loc == -1 and start != 0:
-                # string not found, start at beginning
                 if backward:
                     start = end
                     loc = textstring.rfind(findstring, 0, start)
@@ -534,17 +519,16 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
                             wx.OK | wx.ICON_INFORMATION)
                 dlg.ShowModal()
                 dlg.Destroy()
-            if self.finddlg:
-                if loc == -1:
-                    self.finddlg.SetFocus()
-                    return
+            if self.finddlg and loc == -1:
+                self.finddlg.SetFocus()
+                return
     #             else:
     #                 self.finddlg.Destroy()
     #                 self.finddlg = None
             self.ShowPosition(loc)
             self.SetSelection(loc, loc + len(findstring))
             self.SetText(self.GetText()[:loc] + evt.GetReplaceString() + self.GetText()[loc + len(findstring):])
-            # TODO : need to be workd
+                # TODO : need to be workd
         if et in [wx.wxEVT_COMMAND_FIND_REPLACE_ALL]:
             # replaceTxt = "Replace text: %s" % evt.GetReplaceString()
             self.SetText(re.sub(findstring, evt.GetReplaceString(), self.GetText(), flags=re.I))
@@ -571,10 +555,9 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
                             wx.OK | wx.ICON_INFORMATION)
                 dlg.ShowModal()
                 dlg.Destroy()
-            if self.finddlg:
-                if loc == -1:
-                    self.finddlg.SetFocus()
-                    return
+            if self.finddlg and loc == -1:
+                self.finddlg.SetFocus()
+                return
     #             else:
     #                 self.finddlg.Destroy()
     #                 self.finddlg = None
@@ -610,7 +593,7 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
         for singleSql in sqlList:
             parsedSingleSql = sqlparse.parse(singleSql)
             tokens = parsedSingleSql[0].tokens
-            
+
         # get previous keyword
         isToken=False
         count=-1
@@ -623,17 +606,13 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
                 count=count-1
             else:
                 break
-        
+
         if previousTokenKey.value == 'from':
-            
             sqlText = "select name from sqlite_master where type='table' order by 1;"
             tables = self.executeSqlText(sqlText)
             for table in tables:
                 self.adviceList.append(table[0])
-        elif previousTokenKey.value == 'select':
-            # get all the columns for 
-            pass
-        else:
+        elif previousTokenKey.value != 'select':
             self.adviceList.append("select * from ")
             self.adviceList.append("create table Table_1 ( id number); ")
             self.adviceList.append("desc ")
@@ -641,7 +620,6 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
     def OnUpdateUI(self, evt):
         # check for matching braces
         braceAtCaret = -1
-        braceOpposite = -1
         charBefore = None
         caretPos = self.GetCurrentPos()
 
@@ -661,9 +639,7 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
             if charAfter and chr(charAfter) in "[]{}()" and styleAfter == stc.STC_P_OPERATOR:
                 braceAtCaret = caretPos
 
-        if braceAtCaret >= 0:
-            braceOpposite = self.BraceMatch(braceAtCaret)
-
+        braceOpposite = self.BraceMatch(braceAtCaret) if braceAtCaret >= 0 else -1
         if braceAtCaret != -1  and braceOpposite == -1:
             self.BraceBadLight(braceAtCaret)
         else:
@@ -731,15 +707,10 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
         line = line + 1
 
         while line <= lastChild:
-            if force:
-                if visLevels > 0:
-                    self.ShowLines(line, line)
-                else:
-                    self.HideLines(line, line)
-            else:
-                if doExpand:
-                    self.ShowLines(line, line)
-
+            if force and visLevels > 0 or not force and doExpand:
+                self.ShowLines(line, line)
+            elif force:
+                self.HideLines(line, line)
             if level == -1:
                 level = self.GetFoldLevel(line)
 
@@ -752,11 +723,10 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
 
                     line = self.Expand(line, doExpand, force, visLevels - 1)
 
+                elif doExpand and self.GetFoldExpanded(line):
+                    line = self.Expand(line, True, force, visLevels - 1)
                 else:
-                    if doExpand and self.GetFoldExpanded(line):
-                        line = self.Expand(line, True, force, visLevels - 1)
-                    else:
-                        line = self.Expand(line, False, force, visLevels - 1)
+                    line = self.Expand(line, False, force, visLevels - 1)
             else:
                 line = line + 1
 
@@ -769,7 +739,9 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
         logger.debug('GetHighlightGuide: %s', self.GetHighlightGuide())
 #             self.statusbar.SetStatusText(self.getCurrentCursorPosition(), 0)
         if hasattr(self.GetTopLevelParent(), 'statusbar'):
-            self.GetTopLevelParent().statusbar.SetStatusText("Line " + str(line) + " , Column " + str(column), 0)
+            self.GetTopLevelParent().statusbar.SetStatusText(
+                f"Line {str(line)} , Column {str(column)}", 0
+            )
 
         event.Skip()
 
@@ -965,7 +937,7 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
         '''
         error = 'success'
         sqlText = self.GetSelectedText()
-        if self.GetSelectedText() == '' or self.GetSelectedText() == None:
+        if self.GetSelectedText() == '' or self.GetSelectedText() is None:
             sqlText, column = self.GetCurLine()
 
         ##################################################################################
@@ -987,10 +959,11 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
                     try:
                         if self.GetTopLevelParent()._mgr.GetPane("consoleOutput").window.text.Value.strip() == "":
                             newline = ""
-                        self.GetTopLevelParent()._mgr.GetPane("consoleOutput").window.text.AppendText("{}{} {}".format(newline, strftime, oe))
+                        self.GetTopLevelParent()._mgr.GetPane(
+                            "consoleOutput"
+                        ).window.text.AppendText(f"{newline}{strftime} {oe}")
                     except Exception as e:
                         pass
-#                     self.GetTopLevelParent()._mgr.GetPane("consoleOutput").window.text.AppendText("\n" + str(oe))
                 except Exception as e:
                     logger.error(e, exc_info=True)
                     now = datetime.datetime.now()
@@ -998,7 +971,9 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
                     newline = "\n"
                     if self.GetTopLevelParent()._mgr.GetPane("consoleOutput").window.text.Value.strip() == "":
                         newline = ""
-                    self.GetTopLevelParent()._mgr.GetPane("consoleOutput").window.text.AppendText("{}{} {}".format(newline, strftime, e))
+                    self.GetTopLevelParent()._mgr.GetPane(
+                        "consoleOutput"
+                    ).window.text.AppendText(f"{newline}{strftime} {e}")
 
                 endTime = time.time()
                 logger.debug('duration: %s', endTime - startTime)
@@ -1016,14 +991,11 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
                 resultListPanel = self.GetGrandParent().Children[1]
         #         if sqlOutput:
                 if sqlOutput and resultListPanel._nb.GetCurrentPage():
-                    resultListPanel._nb.GetCurrentPage().bottomResultToolbar.SetStatusText('Count: {}'.format(len(sqlOutput) - 1))
+                    resultListPanel._nb.GetCurrentPage().bottomResultToolbar.SetStatusText(
+                        f'Count: {len(sqlOutput) - 1}'
+                    )
                     resultListPanel._nb.GetCurrentPage().resultPanel.addData(data=sqlOutput)
                     resultListPanel._nb.GetCurrentPage().resultPanel.setSqlText(sqlText)
-#                     resultListPanel._nb.GetCurrentPage().resultPanel.DoRefresh()
-#                 else:
-#                     # logic to add a new tab in result
-#                     logger.debug('adding a new tab')
-#                     self.GetGrandParent().GetParent().resultPanel.addTab()
         except TypeError as te:
             logger.error(te, exc_info=True)
             if not dbFilePath:
@@ -1033,7 +1005,9 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
                 newline = "\n"
                 if self.GetTopLevelParent()._mgr.GetPane("consoleOutput").window.text.Value.strip() == "":
                     newline = ""
-                self.GetTopLevelParent()._mgr.GetPane("consoleOutput").window.text.AppendText("{}{} {}".format(newline, strftime, error))
+                self.GetTopLevelParent()._mgr.GetPane(
+                    "consoleOutput"
+                ).window.text.AppendText(f"{newline}{strftime} {error}")
         except Exception as e:
             logger.error(e, exc_info=True)
             now = datetime.datetime.now()
@@ -1041,7 +1015,9 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
             newline = "\n"
             if self.GetTopLevelParent()._mgr.GetPane("consoleOutput").window.text.Value.strip() == "":
                 newline = ""
-            self.GetTopLevelParent()._mgr.GetPane("consoleOutput").window.text.AppendText("{}{} {}".format(newline, strftime, e))
+            self.GetTopLevelParent()._mgr.GetPane(
+                "consoleOutput"
+            ).window.text.AppendText(f"{newline}{strftime} {e}")
 
 #             print(e)
             error = str(e)
@@ -1089,8 +1065,7 @@ class SqlStyleTextCtrl(stc.StyledTextCtrl):
 
     def refreshSqlLogUi(self):
         logger.debug('refreshSqlLogUi')
-        historyGrid = self.GetTopLevelParent()._mgr.GetPane("sqlLog").window
-        if historyGrid:
+        if historyGrid := self.GetTopLevelParent()._mgr.GetPane("sqlLog").window:
             sqlText = 'select * from sql_log order by created_time desc;'
             sqlExecuter = SQLExecuter(database='_opal.sqlite')
             sqlOutput = sqlExecuter.executeText(sqlText)

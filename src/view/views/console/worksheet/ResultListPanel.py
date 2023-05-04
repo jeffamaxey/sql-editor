@@ -87,10 +87,7 @@ class ResultModel(dv.PyDataViewIndexListModel):
             item2, item1 = item1, item2
         row1 = self.GetRow(item1)
         row2 = self.GetRow(item2)
-        if col == 0:
-            return (int(self.data[row1][col]) > int(self.data[row2][col])) - (int(self.data[row1][col]) < int(self.data[row2][col]))
-        else:
-            return (int(self.data[row1][col]) > int(self.data[row2][col])) - (int(self.data[row1][col]) < int(self.data[row2][col]))
+        return (int(self.data[row1][col]) > int(self.data[row2][col])) - (int(self.data[row1][col]) < int(self.data[row2][col]))
 
     def DeleteRows(self, rows):
         # make a copy since we'll be sorting(mutating) the list
@@ -157,10 +154,7 @@ class ResultPanel(wx.Panel):
 
     def setModel(self, model=None, data=None):
         # Create an instance of our simple model...
-        if model is None:
-            self.model = ResultModel(data)
-        else:
-            self.model = model
+        self.model = ResultModel(data) if model is None else model
 
     def createDataViewCtrl(self, data=None, headerList=None):
 
@@ -254,7 +248,7 @@ class ResultPanel(wx.Panel):
                 head, tail = os.path.split(path)
         except Exception as e:
             logger.error(e, exc_info=True)
-        logger.info('path {}'.format(path))
+        logger.info(f'path {path}')
         imageLocation = os.path.abspath(os.path.join(path, "images"))
         tb1.AddSimpleTool(ID_ROW_ADD, "Row add", wx.Bitmap(os.path.join(imageLocation, "row_add.png")), short_help_string="Row add ")
         tb1.AddSimpleTool(ID_ROW_DELETE, "Row delete", wx.Bitmap(os.path.join(imageLocation, "row_delete.png")), short_help_string="Row delete ")
@@ -292,14 +286,14 @@ class CreatingResultWithToolbarPanel(wx.Panel):
     def __init__(self, parent=None, *args, **kw):
         wx.Panel.__init__(self, parent, id=-1, style=wx.CLIP_CHILDREN | wx.BORDER_NONE)
         self.parent = parent
-        self.data = list()
+        self.data = []
         self.pin = False
         vBox = wx.BoxSizer(wx.VERTICAL)
         self.fileOperations = FileOperations()
         ####################################################################
         self.topResultToolbar = self.constructTopResultToolBar()
         self.bottomResultToolbar = wx.StatusBar(self)
-        self.bottomResultToolbar.SetStatusText('Count: {}'.format(len(self.getData())))
+        self.bottomResultToolbar.SetStatusText(f'Count: {len(self.getData())}')
 #         self.bottomResultToolbar = self.constructBottomResultToolBar()
 #         self.resultPanel = ResultPanel(self, data=self.getData())
         self.resultPanel = ResultDataGrid(self, data=self.getData())
@@ -445,11 +439,7 @@ class CreateResultSheetTabPanel(wx.Panel):
         Get the current active Page page
         """
         num = self._nb.GetSelection()
-        if num == -1:
-            page = None
-        else:
-            page = self._nb.GetPage(num)
-        return page
+        return None if num == -1 else self._nb.GetPage(num)
 
     def GetPages(self, page_type):
         """

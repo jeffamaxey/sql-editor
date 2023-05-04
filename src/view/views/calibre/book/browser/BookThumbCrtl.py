@@ -325,7 +325,7 @@ def opj(path):
     strs = os.path.join(*tuple(path.split('/')))
     # HACK: on Linux, a leading / gets lost...
     if path.startswith('/'):
-        strs = '/' + strs
+        strs = f'/{strs}'
 
     return strs
 
@@ -413,11 +413,7 @@ def SortFiles(items, sorteditems, filenames):
     :param `filenames`: a list of image filenames.
     """
 
-    newfiles = []
-    for item in sorteditems:
-        newfiles.append(filenames[items.index(item)])
-
-    return newfiles
+    return [filenames[items.index(item)] for item in sorteditems]
 
 # ---------------------------------------------------------------------------- #
 # Class PILImageHandler, handles loading and highlighting images with PIL
@@ -686,17 +682,17 @@ class Thumb(object):
 
         if self.GetRotation() % (2 * pi) < 1e-6:
             if not self._bitmap.IsOk():
-                if not hasattr(self, "_threadedimage"):
-                    img = GetMondrianImage()
-                else:
-                    img = self._threadedimage
-
+                img = (
+                    self._threadedimage
+                    if hasattr(self, "_threadedimage")
+                    else GetMondrianImage()
+                )
             else:
-                if not hasattr(self, "_threadedimage"):
-                    img = GetMondrianImage()
-                else:
-                    img = self._threadedimage
-
+                img = (
+                    self._threadedimage
+                    if hasattr(self, "_threadedimage")
+                    else GetMondrianImage()
+                )
         else:
 
             img = self.GetRotatedImage()
@@ -709,15 +705,10 @@ class Thumb(object):
         if width < imgwidth or height < imgheight:
             scale = float(width) / imgwidth
 
-            if scale > float(height) / imgheight:
-                scale = float(height) / imgheight
-
+            scale = min(scale, float(height) / imgheight)
             newW, newH = int(imgwidth * scale), int(imgheight * scale)
-            if newW < 1:
-                newW = 1
-            if newH < 1:
-                newH = 1
-
+            newW = max(newW, 1)
+            newH = max(newH, 1)
             img = img.Scale(newW, newH)
 
         bmp = img.ConvertToBitmap()
@@ -729,14 +720,12 @@ class Thumb(object):
     def GetOriginalImage(self):
         """ Returns the bitmap associated to a thumbnail, as a file name. """
 
-        original = opj((self._dir + "/" + self._filename))
-
-        return original
+        return opj(f"{self._dir}/{self._filename}")
 
     def GetFullFileName(self):
         """ Returns the full filename of the thumbnail. """
 
-        return self._dir + "/" + self._filename
+        return f"{self._dir}/{self._filename}"
 
     def GetCaption(self, line):
         """
@@ -746,12 +735,7 @@ class Thumb(object):
          caption strings).
         """
 
-        if line + 1 >= len(self._captionbreaks):
-            return ""
-
-        strs = self._caption
-
-        return strs
+        return "" if line + 1 >= len(self._captionbreaks) else self._caption
 
     def GetFileSize(self):
         """ Returns the file size associated to a thumbnail. """
@@ -1001,12 +985,10 @@ class ThumbnailCtrl(wx.Panel):
         if show:
             self._showcombo = True
             self._sizer.Show(0, True)
-            self._sizer.Layout()
         else:
             self._showcombo = False
             self._sizer.Show(0, False)
-            self._sizer.Layout()
-
+        self._sizer.Layout()
         self._scrolled.Refresh()
 
     def GetShowComboBox(self):
@@ -1178,10 +1160,10 @@ class ScrolledThumbnail(wx.ScrolledWindow):
             logger.debug('right key pressed:%s,%d', self._selected, len(self.books))
             if self._selected < len(self.books) - 1:
                 self.SetSelection(self._selected + 1)
-            
+
         elif event.GetKeyCode() == 314:
             logger.debug('left key pressed: %s,%d', self._selected, len(self.books))
-            if 0 < self._selected:
+            if self._selected > 0:
                 self.SetSelection(self._selected - 1)
         elif event.GetKeyCode() == 315:
             logger.debug(f'Up key pressed selected:{ self._selected} rows:{self._rows} col:{self._cols}')
@@ -1193,7 +1175,7 @@ class ScrolledThumbnail(wx.ScrolledWindow):
             event.Skip()
         elif event.GetKeyCode() == 317:
             logger.debug(f'down key pressed selected:{ self._selected} rows:{self._rows} col:{self._cols}')
-            
+
             if self._selected + self._cols < self.GetItemCount():
                 self.SetSelection(self._selected + self._cols)
             else:
@@ -1520,12 +1502,9 @@ class ScrolledThumbnail(wx.ScrolledWindow):
                 return
 
             self.LoadImages(filenames[count], count)
-            if count < 4:
+            if count < 4 or count % 4 == 0:
                 self.Refresh()
-            elif count % 4 == 0:
-                self.Refresh()
-
-            count = count + 1
+            count += 1
 
         self._isrunning = False
         thread.exit()
@@ -1586,8 +1565,8 @@ class ScrolledThumbnail(wx.ScrolledWindow):
         """
         self.books = books
         if filter >= 0:
-            self._filter = filter        
-        thumbs = []     
+            self._filter = filter
+        thumbs = []
         if books:   
             for book in books:
                 
@@ -1597,10 +1576,9 @@ class ScrolledThumbnail(wx.ScrolledWindow):
                     imagePath = book.bookPath
                     if not os.path.exists(imagePath):
                         return
-                    filenames = self.ListDirectory(imagePath, extensions)
-                    if filenames:
+                    if filenames := self.ListDirectory(imagePath, extensions):
                         imageName = filenames[0]
-                        
+
                     imagePath_1 = os.path.join(imagePath, book.bookImgName)
                     if os.path.exists(imagePath_1):
                         imageName = book.bookImgName
@@ -1610,24 +1588,24 @@ class ScrolledThumbnail(wx.ScrolledWindow):
                     imageName = book.imageFileName
                 bookName = book.bookName
     #                 imagePath=os.path.join(book.bookPath,imageName);
-                    
+
                 stats = os.stat(os.path.join(imagePath, imageName))
                 size = stats[6]
-    
+
                 if size < 1000:
-                    size = str(size) + " bytes"
+                    size = f"{str(size)} bytes"
                 elif size < 1000000:
-                    size = str(int(round(size / 1000.0))) + " Kb"
+                    size = f"{int(round(size / 1000.0))} Kb"
                 else:
-                    size = str(round(size / 1000000.0, 2)) + " Mb"
-    
+                    size = f"{str(round(size / 1000000.0, 2))} Mb"
+
                 lastmod = time.strftime(TIME_FMT, time.localtime(stats[8]))
-    
+
     #             if self._filter & THUMB_FILTER_IMAGES:
     #                 thumbs.append(Thumb(self, folder, files, caption, size, lastmod))
     #                 pass
                 thumbs.append(Thumb(self, imagePath, imageName, bookName, size, lastmod, book))
-    
+
         caption = None
         try:
             if self._dir:
@@ -1662,7 +1640,7 @@ class ScrolledThumbnail(wx.ScrolledWindow):
         for files in filenames:
 
             caption = (self._showfilenames and [files] or [""])[0]
-            fullfile = opj(self._dir + "/" + files)
+            fullfile = opj(f"{self._dir}/{files}")
             if not os.path.isfile(fullfile):
                 continue
 
@@ -1670,11 +1648,11 @@ class ScrolledThumbnail(wx.ScrolledWindow):
             size = stats[6]
 
             if size < 1000:
-                size = str(size) + " bytes"
+                size = f"{str(size)} bytes"
             elif size < 1000000:
-                size = str(int(round(size / 1000.0))) + " Kb"
+                size = f"{int(round(size / 1000.0))} Kb"
             else:
-                size = str(round(size / 1000000.0, 2)) + " Mb"
+                size = f"{str(round(size / 1000000.0, 2))} Mb"
 
             lastmod = time.strftime(TIME_FMT, time.localtime(stats[8]))
 
@@ -1779,13 +1757,13 @@ class ScrolledThumbnail(wx.ScrolledWindow):
             for ii in range(len(self._items)):
                 for jj in range(len(selected)):
                     if self._items[ii].GetFileName() == selectedfname[jj] and \
-                       self._items[ii].GetId() == selecteditemid[jj]:
+                           self._items[ii].GetId() == selecteditemid[jj]:
 
                         self._selectedarray.append(ii)
                         if len(self._selectedarray) == 1:
                             self.ScrollToSelected()
 
-            if len(self._selectedarray) > 0:
+            if self._selectedarray:
                 self.Refresh()
                 eventOut = ThumbnailEvent(wxEVT_THUMBNAILS_SEL_CHANGED, self.GetId())
                 self.GetEventHandler().ProcessEvent(eventOut)
@@ -1802,7 +1780,7 @@ class ScrolledThumbnail(wx.ScrolledWindow):
 
             maxWidth = self._labelcontrol.GetSize().GetWidth() / 8
             if len(caption) > maxWidth:
-                caption = "..." + caption[len(caption) + 3 - maxWidth]
+                caption = f"...{caption[len(caption) + 3 - maxWidth]}"
 
             self._labelcontrol.SetLabel(caption)
 
@@ -1868,9 +1846,7 @@ class ScrolledThumbnail(wx.ScrolledWindow):
             row = row + 1
             y = y - (self._tHeight + self._tBorder + self.GetCaptionHeight(row))
 
-        if row < 0:
-            row = 0
-
+        row = max(row, 0)
         index = row * self._cols + col
 
         if index >= len(self._items):
@@ -2030,13 +2006,13 @@ class ScrolledThumbnail(wx.ScrolledWindow):
         :param `width`: the caption string width, in pixels.
         """
 
-        caption = "..." + caption
+        caption = f"...{caption}"
 
         while sw > width:
             caption = caption[:-1]
             sw, sh = dc.GetTextExtent(caption)
 
-        return  caption[3:] + "..."
+        return f"{caption[3:]}..."
 
     def DrawThumbnail(self, bmp, thumb, index):
         """

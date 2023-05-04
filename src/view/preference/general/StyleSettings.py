@@ -101,8 +101,7 @@ class StyleEditor(ed_basewin.EdBaseDialog):
         @return: bool
 
         """
-        saved = self._panel.SaveStyleSheet()
-        return saved
+        return self._panel.SaveStyleSheet()
 
     def OnCancel(self, evt):
         """Catches the cancel button clicks and checks if anything
@@ -288,7 +287,7 @@ class StyleEditorBox(ed_basewin.EdBaseCtrlBox):
                 try:
                     os.mkdir(user_config)
                 except (OSError, IOError) as msg:
-                    util.Log("[style_editor][err] %s" % msg)
+                    util.Log(f"[style_editor][err] {msg}")
                 else:
                     ed_glob.CONFIG['STYLES_DIR'] = user_config
 
@@ -302,10 +301,10 @@ class StyleEditorBox(ed_basewin.EdBaseCtrlBox):
             sheet = u".".join(os.path.basename(sheet_path).split(u'.')[:-1])
             self.StyleTheme = sheet
             self.Window.ResetTransientStyleData()
-            util.Log("[style_editor][info] Successfully exported: %s" % sheet)
+            util.Log(f"[style_editor][info] Successfully exported: {sheet}")
 
             if sheet_path.startswith(ed_glob.CONFIG['STYLES_DIR']) or \
-               sheet_path.startswith(ed_glob.CONFIG['SYS_STYLES_DIR']):
+                   sheet_path.startswith(ed_glob.CONFIG['SYS_STYLES_DIR']):
                 # Update editor windows/buffer to use new style sheet
                 UpdateBufferStyles(sheet)
             rval = True
@@ -344,7 +343,7 @@ class StyleEditorBox(ed_basewin.EdBaseCtrlBox):
             writer.close()
         except (AttributeError, IOError) as msg:
             util.Log('[style_editor][err] Failed to export style sheet')
-            util.Log('[style_editor][err] %s' % msg)
+            util.Log(f'[style_editor][err] {msg}')
             bOk = False
         return bOk
 
@@ -354,11 +353,9 @@ class StyleEditorBox(ed_basewin.EdBaseCtrlBox):
         """Handle the Add/Remove Buttons"""
         e_obj = evt.GetEventObject()
         if e_obj is self._addbtn:
-            # TODO: warn about unsaved changes
-            fname = wx.GetTextFromUser(_("Enter style sheet name"),
-                                       _("New Style Sheet"),
-                                       parent=self)
-            if fname:
+            if fname := wx.GetTextFromUser(
+                _("Enter style sheet name"), _("New Style Sheet"), parent=self
+            ):
                 # Case insensitive check
                 if fname.lower() in [name.lower() for name in self.SyntaxSheets]:
                     # Already exists
@@ -475,12 +472,10 @@ class StyleEditorPanel(wx.Panel):
         @return: bool
 
         """
-        diff = False
-        for key in self.styles_orig:
-            if self.styles_orig[key] != self.styles_new[key]:
-                diff = True
-                break
-        return diff
+        return any(
+            self.styles_orig[key] != self.styles_new[key]
+            for key in self.styles_orig
+        )
 
     def EnableSettings(self, enable=True):
         """Enables/Disables all settings controls
@@ -497,12 +492,10 @@ class StyleEditorPanel(wx.Panel):
                  into a string that is in Editra Style Sheet format.
 
         """
-        sty_sheet = list()
         ditem = self.styles_new.get('default_style', StyleItem())
         dvals = ';\n\t\t'.join([item.replace(',', ' ')
                                 for item in ditem.GetAsList() ]) + ';'
-        sty_sheet.append(''.join(['default_style {\n\t\t', dvals, '\n\n}\n\n']))
-
+        sty_sheet = [''.join(['default_style {\n\t\t', dvals, '\n\n}\n\n'])]
         tags = sorted(self.styles_new.keys())
         for tag in tags:
             item = self.styles_new[tag]
@@ -524,15 +517,13 @@ class StyleEditorPanel(wx.Panel):
             # Add any modifiers to the modifier tag
             modifiers = item.GetModifiers()
             if len(modifiers):
-                stage1 += (u"modifiers:" + modifiers + u";").replace(',', ' ')
+                stage1 += f"modifiers:{modifiers};".replace(',', ' ')
 
             # If the StyleItem had any set attributes add it to the stylesheet
             if len(stage1):
                 sty_sheet.append(tag + u" {\n")
-                stage2 = u"\t\t" + stage1[0:-1].replace(u";", u";\n\t\t") + u";"
-                sty_sheet.append(stage2)
-                sty_sheet.append(u"\n}\n\n")
-
+                stage2 = u"\t\t" + stage1[:-1].replace(u";", u";\n\t\t") + u";"
+                sty_sheet.extend((stage2, u"\n}\n\n"))
         return u"".join(sty_sheet)
 
     def ResetTransientStyleData(self):
@@ -722,7 +713,7 @@ class SettingsPanel(wx.Panel):
         # Add divider line
         hsizer.Add(wx.StaticLine(self, size=(-1, 2), style=wx.LI_VERTICAL),
                    0, wx.ALIGN_CENTER_HORIZONTAL|wx.EXPAND|wx.TOP|wx.BOTTOM, 5)
-        
+
         # Setup the Right side
         setting_sizer = wx.BoxSizer(wx.VERTICAL)
         setting_top = wx.BoxSizer(wx.HORIZONTAL)
@@ -794,8 +785,7 @@ class SettingsPanel(wx.Panel):
         # Font Size
         fsize_sizer = wx.BoxSizer(wx.HORIZONTAL)
         fsize_lbl = wx.StaticText(self, label=_("Size") + u": ")
-        fsizes = [u"%(size)d", u"%(size2)d"]
-        fsizes.extend([ unicode(x) for x in range(4, 21) ])
+        fsizes = ["%(size)d", "%(size2)d", *[ unicode(x) for x in range(4, 21) ]]
         fs_choice = wx.Choice(self, ID_FONT_SIZE, choices=fsizes)
         fsize_sizer.AddMany([((5, 5), 0),
                              (fsize_lbl, 0, wx.ALIGN_CENTER_VERTICAL),
@@ -877,7 +867,7 @@ class PreviewPanel(ed_basewin.EdBaseCtrlBox):
         try:
             fname = glob.glob(ed_glob.CONFIG['TEST_DIR'] + fname + ".*")[0]
         except IndexError:
-            self.LOG('[style_editor][err] File %s Does not exist' % fname)
+            self.LOG(f'[style_editor][err] File {fname} Does not exist')
             return False
 
         self.preview.SetFileName(fname)
@@ -898,10 +888,7 @@ def DuplicateStyleDict(style_dict):
     @return: a copy of the given styleitem dictionary
 
     """
-    new_dict = dict()
-    for tag in style_dict:
-        new_dict[tag] = style_dict[tag].Clone()
-    return new_dict
+    return {tag: style_dict[tag].Clone() for tag in style_dict}
 
 def UpdateBufferStyles(sheet):
     """Update the style used in all buffers

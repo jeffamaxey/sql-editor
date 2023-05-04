@@ -44,20 +44,19 @@ class SQLExecuter1():
         
     def sqlite_insert(self, table, rows):
         for row in rows:
-            cols = ', '.join('"{}"'.format(col) for col in row.keys())
-            vals = ', '.join(':{}'.format(col) for col in row.keys())
+            cols = ', '.join(f'"{col}"' for col in row.keys())
+            vals = ', '.join(f':{col}' for col in row.keys())
             sql = 'INSERT INTO "{0}" ({1}) VALUES ({2})'.format(table, cols, vals)
             self.conn.cursor().execute(sql, row)
         self.conn.commit()
     def sqlite_insert_or_update(self, table, rows):
         try:
             for row in rows:
-                cols = ', '.join('"{}"'.format(col) for col in row.keys())
-                vals = ', '.join(':{}'.format(col) for col in row.keys())
+                cols = ', '.join(f'"{col}"' for col in row.keys())
+                vals = ', '.join(f':{col}' for col in row.keys())
                 sql = 'INSERT OR REPLACE INTO "{0}" ({1}) VALUES ({2})'.format(table, cols, vals)
                 self.conn.cursor().execute(sql, row)
             self.conn.commit()
-        # Catch the exception
         except Exception as e:
             # Roll back any change if something goes wrong
             self.conn.rollback()
@@ -66,23 +65,22 @@ class SQLExecuter1():
     
     def sqlite_select(self, table):
         
-        returnRows = list()
-        with self.conn:    
+        returnRows = []
+        with self.conn:
             
-            cur = self.conn.cursor() 
-            cur.execute("SELECT * FROM " + table)
-        
+            cur = self.conn.cursor()
+            cur.execute(f"SELECT * FROM {table}")
+
             rows = cur.fetchall()
-            
-            for row in rows:
-                returnRows.append(row)
+
+            returnRows.extend(iter(rows))
         return returnRows
     
     def executeText(self, text=None):
         ''' This method takes input text to execute in database.
         returns output as dict
         '''
-        sqlOutput = dict()
+        sqlOutput = {}
         try:
             with self.conn:    
                 cur = self.conn.cursor() 
@@ -103,15 +101,3 @@ if __name__ == "__main__":
     command = """.tables """
     result = sqlExecuterProcess.executeCmd(command)
     logger.debug(result)
-    
-#     book_row = [
-#                 {'id':'2',
-#                  'book_name':'abc0'},
-#                 {'id':'3', 'book_name':'abc1'}
-#             ]
-#     sqlExecuter.sqlite_insert_or_update('book', book_row)
-#     print(sqlExecuter.sqlite_select('book'))
-#     text="select * from book;"
-#     sqlExecuter.executeText(text)
-
-    pass

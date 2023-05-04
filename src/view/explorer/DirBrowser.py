@@ -92,7 +92,7 @@ class ExplorerTree(TreeCtrl):
         logger.debug('onkey')
         keycode = event.GetKeyCode()
         keyname = keyMap.get(keycode, None)
-                
+
         if keycode == wx.WXK_BACK:
             logger.debug("OnKeyDown: HAHAHAHA! I Vetoed Your Backspace! HAHAHAHA\n")
             return
@@ -104,18 +104,18 @@ class ExplorerTree(TreeCtrl):
                     keycode = event.GetKeyCode()
                 keyname = "\"" + event.GetUnicodeKey() + "\""
                 if keycode < 27:
-                    keyname = "Ctrl-%s" % chr(ord('A') + keycode - 1)
-                
+                    keyname = f"Ctrl-{chr(ord('A') + keycode - 1)}"
+
             elif keycode < 256:
                 if keycode == 0:
                     keyname = "NUL"
                 elif keycode < 27:
-                    keyname = "Ctrl-%s" % chr(ord('A') + keycode - 1)
+                    keyname = f"Ctrl-{chr(ord('A') + keycode - 1)}"
                 else:
                     keyname = "\"%s\"" % chr(keycode)
             else:
-                keyname = "unknown (%s)" % keycode
-                
+                keyname = f"unknown ({keycode})"
+
         logger.debug("OnKeyDown: You Pressed : %s", keyname)
 
         event.Skip()  

@@ -11,27 +11,28 @@ class FindingBook():
     def __init__(self, libraryPath=None):
         self.libraryPath = libraryPath
         self.createDatabase = CreateDatabase(libraryPath=libraryPath)
-        pass
 
     def searchingBook(self, searchText=None, exactSearchFlag=False, pageSize=10, offset=0):
         '''
         This method return list of books matching with search text.
         @param searchText: may be a book name 
         '''
-        books = list()
-        if searchText != None and searchText != '':
-            os.chdir(self.libraryPath)
-            if exactSearchFlag:
-                books, count = self.createDatabase.findByBookName(searchText)
-            else:
-                books, count = self.createDatabase.findBySimlarBookName(bookName=searchText, limit=pageSize, offset=0)
-        else:
+        books = []
+        if searchText is None or searchText == '':
             books, count = self.findAllBooks()
+        else:
+            os.chdir(self.libraryPath)
+            books, count = (
+                self.createDatabase.findByBookName(searchText)
+                if exactSearchFlag
+                else self.createDatabase.findBySimlarBookName(
+                    bookName=searchText, limit=pageSize, offset=0
+                )
+            )
         return books, count 
     
     def countAllBooks(self):
-        bookCount = self.createDatabase.countAllBooks()
-        return bookCount
+        return self.createDatabase.countAllBooks()
 
     def findBookByNextMaxId(self, bookId=None):
         return self.createDatabase.findBookByNextMaxId(bookId)
@@ -43,14 +44,13 @@ class FindingBook():
         '''
         This method will give all the books list in book library.
         '''
-        books = list()
+        books = []
         os.chdir(self.libraryPath)
         books, count = self.createDatabase.findAllBook(pageSize=pageSize, offset=offset)
         return books, count
 
     def findBookByIsbn(self, isbn_13):
-        bs = self.createDatabase.findBookByIsbn(isbn_13)
-        return bs
+        return self.createDatabase.findBookByIsbn(isbn_13)
 
     def getMaxBookId(self):
         os.chdir(self.libraryPath)
@@ -61,8 +61,7 @@ class FindingBook():
         @param book: book object 
         '''
         bookPath = book.bookPath
-        isSuccessfulDatabaseDelete = self.createDatabase.removeBook(book)
-        if isSuccessfulDatabaseDelete:
+        if isSuccessfulDatabaseDelete := self.createDatabase.removeBook(book):
             BookTerminal().removeBook(bookPath=bookPath)
             
     def findFolderWithoutBook(self):
@@ -74,13 +73,14 @@ class FindingBook():
         listOfDir = [ name for name in os.listdir(directory_name) if os.path.isdir(os.path.join(directory_name, name)) ]
         if listOfDir:
             listOfDir.sort(key=int)
-        defaulterList = list()
+        defaulterList = []
         for dir in listOfDir:
-            lst = list()
             levelOne = os.path.join(directory_name, dir)
-            for sName in os.listdir(levelOne):
-                if os.path.isfile(os.path.join(levelOne, sName)):
-                    lst.append(sName.split('.')[-1:][0])
+            lst = [
+                sName.split('.')[-1:][0]
+                for sName in os.listdir(levelOne)
+                if os.path.isfile(os.path.join(levelOne, sName))
+            ]
 #             if 'pdf' not in lst:
 #                 defaulterList.append(levelOne)
             if len(lst) < 3:

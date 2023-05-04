@@ -220,71 +220,165 @@ class EclipseMainFrame(wx.Frame, PerspectiveManager):
     def getCurrentCursorPosition(self):
         lineNo = 1
         column = 1
-        return "Line " + str(lineNo) + " , Column " + str(column)
+        return f"Line {lineNo} , Column {column}"
 
     def createStatusBar(self):
         logger.debug('creating status bar')
         self.statusbar = self.CreateStatusBar(2, wx.STB_SIZEGRIP)
         self.statusbar.SetStatusWidths([-2, -3])
         self.statusbar.SetStatusText(self.getCurrentCursorPosition(), 0)
-        self.statusbar.SetStatusText("Welcome to {}".format(TITLE), 1)
+        self.statusbar.SetStatusText(f"Welcome to {TITLE}", 1)
 
     def createMenuBar(self):
         logger.debug('creating menu bar')
-                # create menu
         mb = wx.MenuBar()
         # id, name, None, imageName, methodName, enable, perspecitveNameList
         menuItemList = [
-            ["&File", [
-                    [wx.ID_NEW, 'New \tAlt+Shift+N', None, None, False, ['Python', 'database']],
-                    
+            [
+                "&File",
+                [
+                    [
+                        wx.ID_NEW,
+                        'New \tAlt+Shift+N',
+                        None,
+                        None,
+                        False,
+                        ['Python', 'database'],
+                    ],
                     [ID_OPEN_FILE, 'Open File... ', None, None, False, ['Python']],
-                    [ID_OPEN_PROJECT_FROM_FILE_SYSTEM, 'Open Project From File System...', None, 'importdir_wiz.png', False, ['Python']],
-#                     [ID_openConnection, 'Open Database connection \tCtrl+O', None, None, False, ['database']],
-                    [wx.ID_REFRESH, 'Refresh \tF5', None, "refresh.png", False, ['Python']],
+                    [
+                        ID_OPEN_PROJECT_FROM_FILE_SYSTEM,
+                        'Open Project From File System...',
+                        None,
+                        'importdir_wiz.png',
+                        False,
+                        ['Python'],
+                    ],
+                    # #                     [ID_openConnection, 'Open Database connection \tCtrl+O', None, None, False, ['database']],
+                    [
+                        wx.ID_REFRESH,
+                        'Refresh \tF5',
+                        None,
+                        "refresh.png",
+                        False,
+                        ['Python'],
+                    ],
                     [],
                     [ID_CLOSE, 'Close \tCtrl+W', None, None, False, ['Python']],
-                    [ID_CLOSE_ALL, 'Close All \tCtrl+Shift+W', None, None, False, ['Python']],
+                    [
+                        ID_CLOSE_ALL,
+                        'Close All \tCtrl+Shift+W',
+                        None,
+                        None,
+                        False,
+                        ['Python'],
+                    ],
                     [],
                     [ID_SAVE, 'Save \tCtrl+S', None, "save.png", True, ['Python']],
-                    [ID_SAVE_AS, 'Save As...', None, "saveas_edit.png", False, ['Python']],
-                    [ID_SAVE_ALL, 'Save All \tCtrl+Shift+S', None, "saveall_edit.png", False, ['Python']],
+                    [
+                        ID_SAVE_AS,
+                        'Save As...',
+                        None,
+                        "saveas_edit.png",
+                        False,
+                        ['Python'],
+                    ],
+                    [
+                        ID_SAVE_ALL,
+                        'Save All \tCtrl+Shift+S',
+                        None,
+                        "saveall_edit.png",
+                        False,
+                        ['Python'],
+                    ],
                     [],
-                    [ID_RECENT_FILES, 'Recent Files', [
-                                                [wx.ID_CLEAR, 'Clear History', None, None],
-                                            ], None, False, ['Python']],
-                    [ID_IMPORT, 'Import', None, "import_prj.png", False, ['Python']],
+                    [
+                        ID_RECENT_FILES,
+                        'Recent Files',
+                        [
+                            [wx.ID_CLEAR, 'Clear History', None, None],
+                        ],
+                        None,
+                        False,
+                        ['Python'],
+                    ],
+                    [
+                        ID_IMPORT,
+                        'Import',
+                        None,
+                        "import_prj.png",
+                        False,
+                        ['Python'],
+                    ],
                     [ID_EXPORT, 'Export', None, "export.png", False, ['Python']],
                     [],
                     [wx.ID_PRINT, 'Print', None, "print.png", False, ['Python']],
-                    [ID_PROJECT_PROPERTIES, 'Properties', None, "project_properties.png", False, ['Python']],
-                    [ID_SWITCH_WORKSPACE, 'Switch Workspace', None, "workspace_switcher.png", False, ['Python']],
-                    [ID_RESTART, 'Restart', None, "restart.png", False, ['Python']],
+                    [
+                        ID_PROJECT_PROPERTIES,
+                        'Properties',
+                        None,
+                        "project_properties.png",
+                        False,
+                        ['Python'],
+                    ],
+                    [
+                        ID_SWITCH_WORKSPACE,
+                        'Switch Workspace',
+                        None,
+                        "workspace_switcher.png",
+                        False,
+                        ['Python'],
+                    ],
+                    [
+                        ID_RESTART,
+                        'Restart',
+                        None,
+                        "restart.png",
+                        False,
+                        ['Python'],
+                    ],
                     [],
-                    [ wx.ID_EXIT, '&Quit \tCtrl+Q', None, None, False, ['Python']],
-                ]] ,
-            ["&Edit", [
-                    [ wx.ID_UNDO, "Undo \tCtrl+Z", None, "undo_edit.png"],
-                    [ wx.ID_REDO, "Redo \tShift+Ctrl+Z", None, "redo_edit.png"],
+                    [wx.ID_EXIT, '&Quit \tCtrl+Q', None, None, False, ['Python']],
+                ],
+            ],
+            [
+                "&Edit",
+                [
+                    [wx.ID_UNDO, "Undo \tCtrl+Z", None, "undo_edit.png"],
+                    [wx.ID_REDO, "Redo \tShift+Ctrl+Z", None, "redo_edit.png"],
                     [],
-                    [ wx.ID_SELECTALL, "Select All \tCtrl+A", None, "double-tick-16.png"],
-                    [ wx.ID_CUT, "Cut \tCtrl+X", None, "cut_edit.png"],
-                    [ wx.ID_COPY, "Copy \tCtrl+C", None, "copy_edit.png"],
-                    [ wx.ID_PASTE, "Paste \tCtrl+V", None, "paste_edit.png"],
+                    [
+                        wx.ID_SELECTALL,
+                        "Select All \tCtrl+A",
+                        None,
+                        "double-tick-16.png",
+                    ],
+                    [wx.ID_CUT, "Cut \tCtrl+X", None, "cut_edit.png"],
+                    [wx.ID_COPY, "Copy \tCtrl+C", None, "copy_edit.png"],
+                    [wx.ID_PASTE, "Paste \tCtrl+V", None, "paste_edit.png"],
                     [],
-                    [ wx.ID_DELETE, "Delete", None, "delete_obj.png"],
-                    [ wx.NewIdRef(), "Set encoding...", None, None],
-                ]],
-            ["&Search", [
+                    [wx.ID_DELETE, "Delete", None, "delete_obj.png"],
+                    [wx.NewIdRef(), "Set encoding...", None, None],
+                ],
+            ],
+            [
+                "&Search",
+                [
                     [ID_SEARCH_MENU, 'Search \tCtrl+H', None, 'searchres.png'],
-                    [ID_SEARCH_FILE, 'File...', None, 'search_history.png']
-                ]],
-            ["&Navigate", [
+                    [ID_SEARCH_FILE, 'File...', None, 'search_history.png'],
+                ],
+            ],
+            [
+                "&Navigate",
+                [
                     [ID_OPEN_TYPE, 'Open Type', None, 'opentype.png'],
                     [ID_OPEN_TASK, 'Open Task', None, 'open_task.png'],
-                    [ID_GOTO_LINE, 'Go to Line... \tCtrl+L', None, None]
-                ]],
-            ["&Project", [
+                    [ID_GOTO_LINE, 'Go to Line... \tCtrl+L', None, None],
+                ],
+            ],
+            [
+                "&Project",
+                [
                     [ID_OPEN_PROJECT, 'Open Project', None, None],
                     [ID_CLOSE_PROJECT, 'Close Project', None, None],
                     [],
@@ -294,8 +388,11 @@ class EclipseMainFrame(wx.Frame, PerspectiveManager):
                     [ID_BUILD_AUTO, 'Build Automatically', None, None],
                     [],
                     [ID_PROJECT_PROPERTIES, 'Properties', None, None],
-                ]],
-            ["&Run", [
+                ],
+            ],
+            [
+                "&Run",
+                [
                     [ID_RUN, 'Run \tCtrl+F11', None, "runlast_co.png"],
                     [ID_DEBUG, 'Debug \tF11', None, "debuglast_co.png"],
                     [],
@@ -306,81 +403,209 @@ class EclipseMainFrame(wx.Frame, PerspectiveManager):
                     [ID_DEBUG_HISTORY, 'Debug history', None, None],
                     [ID_DEBUG_AS, 'Debug As', None, 'run_exc.png'],
                     [ID_DEBUG_CONFIG, 'Debug Configurations...', None, None],
-
-                ]],
-            ["&Window", [
-                    [ID_CREATE_NEW_WINDOW, 'New Window', None, None ],
-                    [ID_APPEARANCE, 'Appearance', [
-                                                [ID_HIDE_TOOLBAR, 'Hide Toolbar', "toolbar.png", None],
-                                                [ID_HIDE_STATUSBAR, 'Hide Status Bar', None, None]
-                                            ], None
+                ],
+            ],
+            [
+                "&Window",
+                [
+                    [ID_CREATE_NEW_WINDOW, 'New Window', None, None],
+                    [
+                        ID_APPEARANCE,
+                        'Appearance',
+                        [
+                            [ID_HIDE_TOOLBAR, 'Hide Toolbar', "toolbar.png", None],
+                            [ID_HIDE_STATUSBAR, 'Hide Status Bar', None, None],
+                        ],
+                        None,
                     ],
                     [],
-                    [ID_SHOW_VIEW, "Show &View", [
-                                                [ID_SHOW_VIEW_TOOLBAR, 'View Toolbar', "toolbar.png", None ],
-                                                [ID_PERSPECTIVE_TOOLBAR, 'Perspective Toolbar', "toolbar.png", None ],
-                                                [],
-#                                                 [ID_SQL_EXECUTION, 'Center Pane', "script.png", None ],
-                                                [ID_SQL_LOG, 'SQL Log', "sql.png" , None],
-                                                [ID_CONSOLE_LOG, 'Console', "console_view.png", None ],
-                                                [ID_DATABASE_NAVIGATOR, "Database Navigator", "folder_database.png", None ],
-                                                [ID_FILE_EXPLORER, 'File Explorer', "file_explorer.png" , None],
-                                                [ID_PROJECT_EXPLORER, 'Project Explorer', "resource_persp.png", None ],
-                                                [ID_NAVIGATOR, 'Navigator', "filenav_nav.png", None ],
-                                                [ID_TASKS, 'Tasks', "tasks_tsk.png", None ],
-                                                [ID_TERMINAL, 'Terminal', 'terminal.png', None ],
-                                                [ID_PYTHON_SHELL, 'Python Shell', 'shell.png', None ],
-                                                [ID_OUTLINE, 'Outline', "outline_co.png", None ],
-                                                [ID_VARIABLE, 'Variables', "variable_view.png", None ],
-                                                [ID_BREAKPOINTS, 'Breakpoints', "breakpoint_view.png", None ],
-                                                [ID_EXPRESSIONS, 'Expressions', "watchlist_view.png", None ],
-                                                [ID_PYTHON_PACKAGE_EXPLORER, 'Python Package Explorer', "package_explorer.png", None ],  # TODO : need to set image icon
-                                                [ID_JAVA_PACKAGE_EXPLORER, 'Java Package Explorer', "package_explorer.png", None ],  # TODO : need to set image icon
-                                                [],
-                                                [ID_OTHER_VIEW, 'Other', None, None ]
-                                            ], None
+                    [
+                        ID_SHOW_VIEW,
+                        "Show &View",
+                        [
+                            [
+                                ID_SHOW_VIEW_TOOLBAR,
+                                'View Toolbar',
+                                "toolbar.png",
+                                None,
+                            ],
+                            [
+                                ID_PERSPECTIVE_TOOLBAR,
+                                'Perspective Toolbar',
+                                "toolbar.png",
+                                None,
+                            ],
+                            [],
+                            # #                                                 [ID_SQL_EXECUTION, 'Center Pane', "script.png", None ],
+                            [ID_SQL_LOG, 'SQL Log', "sql.png", None],
+                            [ID_CONSOLE_LOG, 'Console', "console_view.png", None],
+                            [
+                                ID_DATABASE_NAVIGATOR,
+                                "Database Navigator",
+                                "folder_database.png",
+                                None,
+                            ],
+                            [
+                                ID_FILE_EXPLORER,
+                                'File Explorer',
+                                "file_explorer.png",
+                                None,
+                            ],
+                            [
+                                ID_PROJECT_EXPLORER,
+                                'Project Explorer',
+                                "resource_persp.png",
+                                None,
+                            ],
+                            [ID_NAVIGATOR, 'Navigator', "filenav_nav.png", None],
+                            [ID_TASKS, 'Tasks', "tasks_tsk.png", None],
+                            [ID_TERMINAL, 'Terminal', 'terminal.png', None],
+                            [ID_PYTHON_SHELL, 'Python Shell', 'shell.png', None],
+                            [ID_OUTLINE, 'Outline', "outline_co.png", None],
+                            [ID_VARIABLE, 'Variables', "variable_view.png", None],
+                            [
+                                ID_BREAKPOINTS,
+                                'Breakpoints',
+                                "breakpoint_view.png",
+                                None,
+                            ],
+                            [
+                                ID_EXPRESSIONS,
+                                'Expressions',
+                                "watchlist_view.png",
+                                None,
+                            ],
+                            [
+                                ID_PYTHON_PACKAGE_EXPLORER,
+                                'Python Package Explorer',
+                                "package_explorer.png",
+                                None,
+                            ],  # TODO : need to set image icon
+                            [
+                                ID_JAVA_PACKAGE_EXPLORER,
+                                'Java Package Explorer',
+                                "package_explorer.png",
+                                None,
+                            ],  # TODO : need to set image icon
+                            [],
+                            [ID_OTHER_VIEW, 'Other', None, None],
+                        ],
+                        None,
                     ],
-                    [ID_PROSPECTIVE_NAVIGATION, "Perspective", [
-                                                [ ID_OPEN_PERSPECTIVE, 'Open Perspective', "new_persp.png", [
-                                                        [ ID_PYTHON_PERSPECTIVE, 'Python', "python_perspective.png", None],
-                                                        [ ID_JAVA_PERSPECTIVE, 'Java', "jperspective.png", None],
-                                                        [ ID_JAVA_EE_PERSPECTIVE, 'Java EE', "javaee_perspective.png", None],
-                                                        [ ID_RESOURCE_PERSPECTIVE, 'Resources', "resource_persp.png", None],
-                                                        [ ID_GIT_PERSPECTIVE, 'Git', "gitrepository.png", None],
-                                                        [ ID_DEBUG_PERSPECTIVE, 'Debug', "debug_persp.png", None],
-                                                        [],
-                                                        [ID_OTHER_PERSPECTIVE, "Other", None],
-                                                    ]],
-                                                [ wx.NewIdRef(), 'Customize Perspective...', None, None ],
-                                                [ wx.NewIdRef(), 'Save Perspective As...', None, None ],
-                                                [ wx.NewIdRef(), 'Reset Perspective...', None, None ],
-                                                [ wx.NewIdRef(), 'Close Perspective...', None, None ],
-                                                [ wx.NewIdRef(), 'Close All Perspective...', None, None ],
-                                            ], None
+                    [
+                        ID_PROSPECTIVE_NAVIGATION,
+                        "Perspective",
+                        [
+                            [
+                                ID_OPEN_PERSPECTIVE,
+                                'Open Perspective',
+                                "new_persp.png",
+                                [
+                                    [
+                                        ID_PYTHON_PERSPECTIVE,
+                                        'Python',
+                                        "python_perspective.png",
+                                        None,
+                                    ],
+                                    [
+                                        ID_JAVA_PERSPECTIVE,
+                                        'Java',
+                                        "jperspective.png",
+                                        None,
+                                    ],
+                                    [
+                                        ID_JAVA_EE_PERSPECTIVE,
+                                        'Java EE',
+                                        "javaee_perspective.png",
+                                        None,
+                                    ],
+                                    [
+                                        ID_RESOURCE_PERSPECTIVE,
+                                        'Resources',
+                                        "resource_persp.png",
+                                        None,
+                                    ],
+                                    [
+                                        ID_GIT_PERSPECTIVE,
+                                        'Git',
+                                        "gitrepository.png",
+                                        None,
+                                    ],
+                                    [
+                                        ID_DEBUG_PERSPECTIVE,
+                                        'Debug',
+                                        "debug_persp.png",
+                                        None,
+                                    ],
+                                    [],
+                                    [ID_OTHER_PERSPECTIVE, "Other", None],
+                                ],
+                            ],
+                            [
+                                wx.NewIdRef(),
+                                'Customize Perspective...',
+                                None,
+                                None,
+                            ],
+                            [wx.NewIdRef(), 'Save Perspective As...', None, None],
+                            [wx.NewIdRef(), 'Reset Perspective...', None, None],
+                            [wx.NewIdRef(), 'Close Perspective...', None, None],
+                            [
+                                wx.NewIdRef(),
+                                'Close All Perspective...',
+                                None,
+                                None,
+                            ],
+                        ],
+                        None,
                     ],
                     [],
-                    [ID_PREFERENCES, "&Preferences", None, "preference.png" ]
-                ]],
-            ["&Help", [
-                    [ ID_WELCOME, "Welcome", None, "welcome16.png"],
+                    [ID_PREFERENCES, "&Preferences", None, "preference.png"],
+                ],
+            ],
+            [
+                "&Help",
+                [
+                    [ID_WELCOME, "Welcome", None, "welcome16.png"],
                     [],
-                    [ wx.NewIdRef(), "Help Contents", None, "smartmode_co.png"],
-                    [ wx.NewIdRef(), "Search", None, "help_search.png"],
+                    [wx.NewIdRef(), "Help Contents", None, "smartmode_co.png"],
+                    [wx.NewIdRef(), "Search", None, "help_search.png"],
                     [],
-                    [ wx.NewIdRef(), "Show active key bindings \tShift+Ctrl+L", None, "keyboard.png"],
-                    [ wx.NewIdRef(), "Tip of the day", None, "smartmode_co.png"],
-                    [ wx.NewIdRef(), "Tips and Tricks...", None, "tricks.png"],
-                    [ wx.NewIdRef(), "Report Bug or Enhancement ...", None, "report_bug.png"],
-                    [ wx.NewIdRef(), "Cheat sheets ...", None, "cheet_sheet.png"],
+                    [
+                        wx.NewIdRef(),
+                        "Show active key bindings \tShift+Ctrl+L",
+                        None,
+                        "keyboard.png",
+                    ],
+                    [wx.NewIdRef(), "Tip of the day", None, "smartmode_co.png"],
+                    [wx.NewIdRef(), "Tips and Tricks...", None, "tricks.png"],
+                    [
+                        wx.NewIdRef(),
+                        "Report Bug or Enhancement ...",
+                        None,
+                        "report_bug.png",
+                    ],
+                    [wx.NewIdRef(), "Cheat sheets ...", None, "cheet_sheet.png"],
                     [],
-                    [ ID_UPDATE_CHECK, "Check for &Updates", None, "iu_update_obj.png"],
-                    [ wx.NewIdRef(), "Install New Software...", None, "iu_obj.png"],  # TODO: need to set icon
-                    [ wx.NewIdRef(), "Eclipse Marketplace", None, "marketplace16.png"],  # TODO: need to set icon
+                    [
+                        ID_UPDATE_CHECK,
+                        "Check for &Updates",
+                        None,
+                        "iu_update_obj.png",
+                    ],
+                    [wx.NewIdRef(), "Install New Software...", None, "iu_obj.png"],
+                    [
+                        wx.NewIdRef(),
+                        "Eclipse Marketplace",
+                        None,
+                        "marketplace16.png",
+                    ],
                     [],
-                    [ wx.ID_ABOUT, "&About {}".format(TITLE), None, None],
-                    [ wx.NewIdRef(), "Contribute", None, "star.png"],
-                ]]
-            ]
+                    [wx.ID_ABOUT, f"&About {TITLE}", None, None],
+                    [wx.NewIdRef(), "Contribute", None, "star.png"],
+                ],
+            ],
+        ]
 
 #         mb = self.createMenu(menuItemList=menuItemList)
 
@@ -397,14 +622,14 @@ class EclipseMainFrame(wx.Frame, PerspectiveManager):
 #             return menubar
 # 
 #         creatingMenu(menuItemList)
-                
+
         for menuItem in menuItemList:
             topLevelMenu = wx.Menu()
             if menuItem[1]:
                 for windowMenu in menuItem[1]:
                     if len(windowMenu) == 0:
                         topLevelMenu.AppendSeparator()
-                        
+
                     elif windowMenu[2] and windowMenu[0] != wx.ID_NEW:
                         firstLevelMenu = wx.Menu()
                         try:
@@ -419,7 +644,7 @@ class EclipseMainFrame(wx.Frame, PerspectiveManager):
                                             secondLevelMenuItem.AppendSeparator()
                                         else:
                                             self.appendLeafToMenu(secondLevelMenu[0], attacheTo=secondLevelMenuItem, menuName=secondLevelMenu[1], imageName=secondLevelMenu[2])
-                                            
+
                                             if secondLevelMenu[0] == wx.ID_CLEAR:
                                                 print('got')
                                     firstLevleMenuItem = firstLevelMenu.Append(-1, showViewMenu[1], secondLevelMenuItem)
@@ -437,19 +662,19 @@ class EclipseMainFrame(wx.Frame, PerspectiveManager):
                     elif windowMenu[0] == wx.ID_NEW:
                         logger.debug('new menu')
                         firstLevelMenu = wx.Menu()
-                        
+
 #                         secondLevelMenuItem = wx.Menu()
                         self.appendLeafToMenu(wx.NewIdRef(), attacheTo=firstLevelMenu, menuName='Project...', imageName=None)
                         self.appendLeafToMenu(wx.NewIdRef(), attacheTo=firstLevelMenu, menuName='Example...', imageName=None)
                         self.appendLeafToMenu(wx.NewIdRef(), attacheTo=firstLevelMenu, menuName='Other...', imageName=None)
 #                         firstLevleMenuItem = firstLevelMenu.Append(-1, 'asdfzxc', secondLevelMenuItem)
 #                         firstLevelMenu.Append(menuItem)
-                        
+
 #                         firstLevelMenu.Append(-1, 'asdfasd', secondLevelMenuItem)
 #                         firstLevelMenu.Append(wx.NewIdRef(), 'asdasdff', secondLevelMenuItem)
 #                         topLevelMenu.Append(firstLevelMenu)
                         topLevelMenu.Append(windowMenu[0], windowMenu[1], firstLevelMenu)
-                        
+
                     else:
                         firstLevelMenu = wx.MenuItem(topLevelMenu, windowMenu[0], windowMenu[1])
                         if windowMenu[3]:
@@ -824,9 +1049,13 @@ class EclipseMainFrame(wx.Frame, PerspectiveManager):
         for pane in self._mgr.GetAllPanes():
             if "Worksheet-" in pane.name:
                 countStr = pane.name.replace("Worksheet-", '')
-                count = int(countStr)
-                count += 1
-        self._mgr.addTabByWindow(self.getWorksheet(dataSourceTreeNode), imageName="script.png", captionName="Worksheet-{}".format(count), tabDirection=5)
+                count = int(countStr) + 1
+        self._mgr.addTabByWindow(
+            self.getWorksheet(dataSourceTreeNode),
+            imageName="script.png",
+            captionName=f"Worksheet-{count}",
+            tabDirection=5,
+        )
 
 #         sqlExecutionTab = self.GetTopLevelParent()._mgr.GetPane("centerPane")
 #         sqlExecutionTab.window.addTab("Worksheet")
@@ -935,7 +1164,7 @@ class EclipseMainFrame(wx.Frame, PerspectiveManager):
     def openPanel(self, name="consoleOutput", imageName="console_view.png", captionName="Console", tabDirection=3):
 #         name="consoleOutput"
         pane = self._mgr.GetPane(name)
-        if pane.window == None:
+        if pane.window is None:
             panel = wx.Panel(self)
             if name == "consoleOutput":
                 panel = SqlConsoleOutputPanel(self)
@@ -975,8 +1204,7 @@ class EclipseMainFrame(wx.Frame, PerspectiveManager):
 
             self._mgr.addTabByWindow(panel, imageName=imageName, name=name , captionName=captionName, tabDirection=tabDirection)
         elif not self._mgr.GetPaneByName(name).IsShown():
-            panel = self._mgr.GetPaneByName(name).window
-            if panel:
+            if panel := self._mgr.GetPaneByName(name).window:
                 panel.Show()
             pane.dock_direction = tabDirection
             pane.Show(True)
@@ -1018,18 +1246,14 @@ class EclipseMainFrame(wx.Frame, PerspectiveManager):
         for pane in self._mgr.GetAllPanes():
             logger.debug(pane.dock_direction_get())
             auiPanInfo = aui.AuiPaneInfo().Icon(self.fileOperations.getImageBitmap(imageName=imageName)).\
-                Name(captionName).Caption(captionName).LeftDockable(True).Direction(wx.TOP).\
-                Center().Layer(0).Position(0).CloseButton(True).MaximizeButton(True).MinimizeButton(True).CaptionVisible(visible=True)
+                    Name(captionName).Caption(captionName).LeftDockable(True).Direction(wx.TOP).\
+                    Center().Layer(0).Position(0).CloseButton(True).MaximizeButton(True).MinimizeButton(True).CaptionVisible(visible=True)
             if pane.dock_direction_get() == tabDirection:  # adding to center tab
                 targetTab = pane
                 if not pane.HasNotebook():
                     self._mgr.CreateNotebookBase(self._mgr._panes, pane)
 #                 targetTab.NotebookPage(pane.notebook_id)
-                    self._mgr.AddPane(window, auiPanInfo, target=targetTab)
-#                 self._mgr._notebooks
-#                 self._mgr.ActivatePane(targetTab.window)
-                else:
-                    self._mgr.AddPane(window, auiPanInfo, target=targetTab)
+                self._mgr.AddPane(window, auiPanInfo, target=targetTab)
                 break
         self.GetTopLevelParent()._mgr.Update()
 

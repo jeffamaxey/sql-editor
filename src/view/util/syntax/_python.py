@@ -49,7 +49,7 @@ try:
     import builtins 
     BUILTINS = dir(builtins)
 except:
-    BUILTINS = list()
+    BUILTINS = []
 #BUILTINS.append('self')
 BUILTINS = list(set(BUILTINS))
 
@@ -147,6 +147,7 @@ def AutoIndenter(estc, pos, ichar):
             tmp_text = estc.GetTextRange(spos, pos)
             BackTrack(tmp_text, tline)
         return tmp_text
+
     text = BackTrack(text, line)
     pos = PosOpenBracket(text)
     if pos > -1:
@@ -155,11 +156,7 @@ def AutoIndenter(estc, pos, ichar):
         return
 
     indent = estc.GetLineIndentation(line)
-    if ichar == u"\t":
-        tabw = estc.GetTabWidth()
-    else:
-        tabw = estc.GetIndent()
-
+    tabw = estc.GetTabWidth() if ichar == u"\t" else estc.GetIndent()
     i_space = indent / tabw
     end_spaces = ((indent - (tabw * i_space)) * u" ")
 
@@ -218,7 +215,7 @@ def PosOpenBracket(text):
     in_string = False
     for pos, char in enumerate(text):
         if in_string:
-            in_string = not char == quote
+            in_string = char != quote
         else:
             if char == u'#':
                 break

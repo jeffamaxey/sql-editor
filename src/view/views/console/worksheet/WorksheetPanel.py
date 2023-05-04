@@ -83,7 +83,7 @@ class CreateWorksheetTabPanel(wx.Panel):
         elif name.startswith('Worksheet'):
             worksheetPanel = CreatingWorksheetWithToolbarPanel(self._nb, -1, style=wx.CLIP_CHILDREN | wx.BORDER_NONE , dataSourceTreeNode=dataSourceTreeNode)
 #             worksheetPanel.worksheetPanel.editorPanel
-            name = 'Worksheet ' + str(len(self.GetPages(type(worksheetPanel))))
+            name = f'Worksheet {len(self.GetPages(type(worksheetPanel)))}'
         elif name.startswith('openFileLoad'):
             name = name.replace('openFileLoad', '', 1)
         self._nb.AddPage(worksheetPanel, name)
@@ -120,11 +120,7 @@ class CreateWorksheetTabPanel(wx.Panel):
         Get the current active Page page
         """
         num = self._nb.GetSelection()
-        if num == -1:
-            page = None
-        else:
-            page = self._nb.GetPage(num)
-        return page
+        return None if num == -1 else self._nb.GetPage(num)
 
     def GetPages(self, page_type):
         """
@@ -145,28 +141,28 @@ class CreateWorksheetTabPanel(wx.Panel):
         if self._nb.DeletePage(currentlySelectedPage) :
             logger.info('page deleted')
         npages = self._nb.GetPageCount()
-        logger.debug("npages {}".format(npages))
+        logger.debug(f"npages {npages}")
 
     def onCloseOthersTabs(self, event=None, currentlySelectedPage=None):
         logger.debug("onCloseOthersTab")
         logger.debug("currentlySelectedPage %s", currentlySelectedPage)
         npages = self._nb.GetPageCount()
 
-        for n in range(currentlySelectedPage, npages):
+        for _ in range(currentlySelectedPage, npages):
             self._nb.DeletePage(currentlySelectedPage + 1)
-        for n in range(0, currentlySelectedPage):
+        for _ in range(0, currentlySelectedPage):
             self._nb.DeletePage(0)
 
     def onCloseLeftTabs(self, event=None, currentlySelectedPage=None):
         logger.debug("onCloseLeftTabs")
         logger.debug("currentlySelectedPage %s", currentlySelectedPage)
-        for n in range(0, currentlySelectedPage):
+        for _ in range(0, currentlySelectedPage):
             self._nb.DeletePage(0)
 
     def onCloseRightTabs(self, event=None, currentlySelectedPage=None):
         npages = self._nb.GetPageCount()
 
-        for n in range(currentlySelectedPage, npages):
+        for _ in range(currentlySelectedPage, npages):
             self._nb.DeletePage(currentlySelectedPage + 1)
         logger.debug("onCloseRightTabs")
         logger.debug("currentlySelectedPage %s", currentlySelectedPage)
@@ -290,12 +286,10 @@ class CreatingWorksheetWithToolbarPanel(wx.Panel):
         tb2 = aui.AuiToolBar(self, -1, wx.DefaultPosition, wx.DefaultSize, agwStyle=aui.AUI_TB_DEFAULT_STYLE | aui.AUI_TB_OVERFLOW)
 
 #         tb2.SetToolBitmapSize(wx.Size(32, 32))
-        self.dynamic_choices = list()
+        self.dynamic_choices = []
         sqlExecuter = SQLExecuter()
         dbList = sqlExecuter.getListDatabase()
-        for db in dbList:
-            self.dynamic_choices.append(db[1])
-
+        self.dynamic_choices.extend(db[1] for db in dbList)
 #         self._ctrl=wx.Choice(tb4, -1, choices=["One choice", "Another choice"])
         self._ctrl = TextCtrlAutoComplete(tb2, id=ID_TEXTCTRL_AUTO_COMPLETE,  choices=self.dynamic_choices)
 #         self._ctrl.SetSize((250, 15))
@@ -362,7 +356,7 @@ class CreatingWorksheetPanel(wx.Panel):
 #         self._nb = wx.Notebook(self)
 
         ####################################################################
-        self.data = dict()
+        self.data = {}
 #         worksheetToolbar = self.constructWorksheetToolBar()
         splitter = wx.SplitterWindow(self, -1, style=wx.SP_3D)
 #         splitter = MultiSplitterWindow(self, id=-1, style=wx.SP_LIVE_UPDATE)

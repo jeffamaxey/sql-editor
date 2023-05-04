@@ -196,10 +196,7 @@ class CreateButtonPanel(wx.Panel):
         searchText = self.GetParent().findTextCtrl.GetValue()
         logger.debug(self.GetParent().directionRadioBox.GetSelection())
         mainStc = self.GetTopLevelParent().Parent
-        back = False
-        if self.GetParent().directionRadioBox.GetSelection():
-            back = True
-
+        back = bool(self.GetParent().directionRadioBox.GetSelection())
         regex = False
         try:
             if self.GetParent.cb3.GetValue():

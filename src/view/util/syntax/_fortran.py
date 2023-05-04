@@ -161,7 +161,7 @@ class SyntaxData(syndata.SyntaxDataBase):
         elif self.LangId == synglob.ID_LANG_F95:
             return ['!']
         else:
-            return list()
+            return []
 
 #---- End Required Module Functions ----#
 
@@ -178,11 +178,7 @@ def AutoIndenter(estc, pos, ichar):
     eolch = estc.GetEOLChar()
 
     indent = estc.GetLineIndentation(line)
-    if ichar == u"\t":
-        tabw = estc.GetTabWidth()
-    else:
-        tabw = estc.GetIndent()
-
+    tabw = estc.GetTabWidth() if ichar == u"\t" else estc.GetIndent()
     i_space = indent / tabw
     ndent = eolch + ichar * i_space
     rtxt = ndent + ((indent - (tabw * i_space)) * u' ')

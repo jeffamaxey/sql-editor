@@ -9,5 +9,3 @@ if __name__=='__main__':
 
     book.parse_contents()
     book.extract_cover_image(outdir='.')
-    
-    pass

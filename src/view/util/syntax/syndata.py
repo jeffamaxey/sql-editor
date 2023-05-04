@@ -38,7 +38,7 @@ class SyntaxDataBase(object):
         # Attributes
         self._langid = langid
         self._lexer = stc.STC_LEX_NULL
-        self._features = dict()
+        self._features = {}
 
     @property
     def CommentPattern(self):
@@ -71,14 +71,14 @@ class SyntaxDataBase(object):
         @return: list of strings ['/*', '*/']
 
         """
-        return list()
+        return []
 
     def GetKeywords(self):
         """Get the Keyword List(s)
         @return: list of tuples [(1, ['kw1', kw2']),]
 
         """
-        return list()
+        return []
 
     def GetLangId(self):
         """Get the language id
@@ -99,7 +99,7 @@ class SyntaxDataBase(object):
         @return: list of tuples [('fold', '1'),]
 
         """
-        return list()
+        return []
 
     def GetSyntaxSpec(self):
         """Get the the syntax specification list

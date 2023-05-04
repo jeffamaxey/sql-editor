@@ -37,7 +37,7 @@ class CreatingTreePanel(wx.Panel):
         wx.Panel.__init__(self, parent, id=-1)
         self.parent = parent
         self.fileOperations = FileOperations()
-        self.connDict = dict()
+        self.connDict = {}
         vBox = wx.BoxSizer(wx.VERTICAL)
         ####################################################################
         self.sqlExecuter = SQLExecuter()
@@ -52,7 +52,7 @@ class CreatingTreePanel(wx.Panel):
         self.filter.Bind(wx.EVT_SEARCHCTRL_CANCEL_BTN, lambda e: self.filter.SetValue(''))
         self.filter.Bind(wx.EVT_TEXT_ENTER, self.OnSearch)
         self.recreateTree()
-        
+
         # add drop target
         self.SetDropTarget(MyFileDropTarget(self))
 #         self.tree.SetExpansionState(self.expansionState)
@@ -64,7 +64,7 @@ class CreatingTreePanel(wx.Panel):
         self.tree.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self.onTreeItemActivated)
         self.tree.Bind(wx.EVT_TREE_KEY_DOWN, self.onTreeKeyDown)
         self.tree.Bind(wx.EVT_TREE_BEGIN_DRAG, self.onTreeBeginDrag)
-        
+
         self.tree.Bind(wx.EVT_RIGHT_DOWN, self.OnTreeRightDown)
         self.tree.Bind(wx.EVT_RIGHT_UP, self.OnTreeRightUp)
 #         self.tree.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown, self)
@@ -85,10 +85,7 @@ class CreatingTreePanel(wx.Panel):
         wx.BeginBusyCursor()
         try:
             for category, items in self._treeList[1]:
-                self.searchItems[category] = []
-                for childItem in items:
-    #                 if SearchDemo(childItem, value):
-                    self.searchItems[category].append(childItem)
+                self.searchItems[category] = list(items)
         except Exception as e:
             logger.error(e, exc_info=True)
         wx.EndBusyCursor()
@@ -100,17 +97,16 @@ class CreatingTreePanel(wx.Panel):
 #         searchMenu = self.filter.GetMenu().GetMenuItems()
 #         fullSearch = searchMenu[1].IsChecked()
         fullSearch = False
-            
-        if evt:
-            if fullSearch:
-                # Do not`scan all the demo files for every char
-                # the user input, use wx.EVT_TEXT_ENTER instead
-                return
-                    
+
+        if evt and fullSearch:
+            # Do not`scan all the demo files for every char
+            # the user input, use wx.EVT_TEXT_ENTER instead
+            return
+
         self.createDefaultNode()
-                    
+
 #         self.tree.Expand(self.root)
-        
+
         self.tree.Thaw()
         self.searchItems = {}
     
@@ -120,22 +116,19 @@ class CreatingTreePanel(wx.Panel):
         sqlExecuter = SQLExecuter()
         dbList = sqlExecuter.getListDatabase()
 
-            
+
         fullSearch = False
         expansionState = self.tree.GetExpansionState()
 
         current = None
-        item = self.tree.GetSelection()
-        if item:
-            prnt = self.tree.GetItemParent(item)
-            if prnt:
+        if item := self.tree.GetSelection():
+            if prnt := self.tree.GetItemParent(item):
                 current = (self.tree.GetItemText(item), self.tree.GetItemText(prnt))
         self.tree.Freeze()
         self.tree.DeleteAllItems()
         self.root = self.tree.AddRoot("Connections")
         self.tree.SetItemImage(self.root, 0)
-        data = dict()
-        data['depth'] = 0
+        data = {'depth': 0}
         self.tree.SetItemData(self.root, data)
         treeFont = self.tree.GetFont()
         catFont = self.tree.GetFont()
@@ -146,27 +139,22 @@ class CreatingTreePanel(wx.Panel):
         # was the size of the same label in the default font.
         if 'wxMSW' not in wx.PlatformInfo:
             treeFont.SetPointSize(treeFont.GetPointSize() + 2)
-            
+
         treeFont.SetWeight(wx.BOLD)
         catFont.SetWeight(wx.BOLD)
         self.tree.SetItemFont(self.root, treeFont)
-        
-        firstChild = None
-        selectItem = None
+
         filter = self.filter.GetValue()
         count = 0
         for db in dbList:
-            data = dict()
-            data['depth'] = 1
-            data['connection_name'] = db[1]
-            data['db_file_path'] = db[2]
+            data = {'depth': 1, 'connection_name': db[1], 'db_file_path': db[2]}
             if db[3] == 3:
                 image = 17
             elif db[3] == 1:
                 image = 16
 #             elif db[3]==1:
 #                 image=16
-            
+
             # Appending connections
             item=self.addNode(targetNode=self.root, nodeLabel=db[1], pydata=data, image=image)
 #             self.connDict[db[1]]['itemId']=item
@@ -176,13 +164,13 @@ class CreatingTreePanel(wx.Panel):
 #             if value['isConnected']:
 #                 logger.debug("{}:{}".format(key, value))
         self.tree.Expand(self.root)
-        if firstChild:
+        if firstChild := None:
             self.tree.Expand(firstChild)
 #         if filter:
 #             self.tree.ExpandAll()
         if expansionState:
             self.tree.SetExpansionState(expansionState)
-        if selectItem:
+        if selectItem := None:
             self.skipLoad = True
             self.tree.SelectItem(selectItem)
             self.skipLoad = False      
@@ -199,7 +187,7 @@ class CreatingTreePanel(wx.Panel):
     #---------------------------------------------
     def OnItemExpanded(self, event):
         item = event.GetItem()
-        logger.debug("OnItemExpanded: %s" % self.tree.GetItemText(item))
+        logger.debug(f"OnItemExpanded: {self.tree.GetItemText(item)}")
         event.Skip()
 
     #---------------------------------------------
@@ -236,19 +224,18 @@ class CreatingTreePanel(wx.Panel):
     def GetKeyPress(self, evt):
         keycode = evt.GetKeyCode()
         keyname = keyMap.get(keycode, None)
-        modifiers = ""
-        for mod, ch in ((evt.GetKeyEvent().ControlDown(), 'Ctrl+'),
-                        (evt.GetKeyEvent().AltDown(), 'Alt+'),
-                        (evt.GetKeyEvent().ShiftDown(), 'Shift+'),
-                        (evt.GetKeyEvent().MetaDown(), 'Meta+')):
-            if mod:
-                modifiers += ch
-    
+        modifiers = "".join(
+            ch
+            for mod, ch in (
+                (evt.GetKeyEvent().ControlDown(), 'Ctrl+'),
+                (evt.GetKeyEvent().AltDown(), 'Alt+'),
+                (evt.GetKeyEvent().ShiftDown(), 'Shift+'),
+                (evt.GetKeyEvent().MetaDown(), 'Meta+'),
+            )
+            if mod
+        )
         if keyname is None:
-            if 27 < keycode < 256:
-                keyname = chr(keycode)
-            else:
-                keyname = "(%s)unknown" % keycode
+            keyname = chr(keycode) if 27 < keycode < 256 else f"({keycode})unknown"
         return modifiers + keyname
 
     #----------------------------------------------------------------------
@@ -297,10 +284,10 @@ class CreatingTreePanel(wx.Panel):
         item, flags = self.tree.HitTest(pt)
         data = self.tree.GetItemData(item)
         rightClickDepth = data['depth']
-        logger.info("Depth: {}".format(data['depth']))
+        logger.info(f"Depth: {rightClickDepth}")
         if rightClickDepth == 1:
             self.onConnectDb(event)
-        if rightClickDepth == 3:
+        elif rightClickDepth == 3:
             # Open a new tab in SQL execution Pane. It is for table info.
             # TODO 
             tableName = self.tree.GetItemText(item)
@@ -315,13 +302,12 @@ class CreatingTreePanel(wx.Panel):
         pt = event.GetPosition();
         item, flags = self.tree.HitTest(pt)
         if item and item == self.tree.GetSelection():
-            logger.debug(self.tree.GetItemText(item) + " Overview")
+            logger.debug(f"{self.tree.GetItemText(item)} Overview")
         event.Skip()
 
     #---------------------------------------------
     def OnSelChanged(self, event):
         logger.debug('OnSelChanged')
-        pass
 
     #---------------------------------------------
     def OnTreeRightDown(self, event):
@@ -332,7 +318,10 @@ class CreatingTreePanel(wx.Panel):
         if item:
             self.tree.item = item
             self.tree.item
-            logger.debug("OnRightClick: %s, %s, %s" % (self.tree.GetItemText(item), type(item), item.__class__) + "\n")
+            logger.debug(
+                f"OnRightClick: {self.tree.GetItemText(item)}, {type(item)}, {item.__class__}"
+                + "\n"
+            )
             self.tree.SelectItem(item)
             if self.tree.GetItemText(self.tree.item) != 'Connections':
                 logger.debug('parent %s', self.tree.GetItemText(self.tree.GetItemParent(self.tree.item)))
@@ -484,14 +473,14 @@ class CreatingTreePanel(wx.Panel):
             selectedItemText = textCtrl.GetValue()
             databaseAbsolutePath = sqlExecuter.getDbFilePath(selectedItemText)
             logger.debug("dbFilePath: %s", databaseAbsolutePath)
-            
+
             ##################################################################################
     #         connectionName = data['connection_name']
 #             databaseAbsolutePath = data['db_file_path']
             if os.path.isfile(databaseAbsolutePath) and depth == 3:     
-                text = "DROP TABLE '{}'".format(self.tree.GetItemText(self.tree.GetSelection()))
+                text = f"DROP TABLE '{self.tree.GetItemText(self.tree.GetSelection())}'"
                 dbObjects = ManageSqliteDatabase(connectionName=selectedItemText , databaseAbsolutePath=databaseAbsolutePath).executeText(text)
-                self.recreateTree(event) 
+                self.recreateTree(event)
         except Exception as e:
             logger.error(e, exc_info=True)
     
@@ -514,7 +503,12 @@ class CreatingTreePanel(wx.Panel):
     def onRenameColumn(self, event):
         logger.debug('onRenameColumn')
         initialColumnName = self.tree.GetItemText(self.tree.GetSelection())
-        dlg = wx.TextEntryDialog(self, 'Rename column ' + initialColumnName, 'Rename column ' + initialColumnName, 'Python')
+        dlg = wx.TextEntryDialog(
+            self,
+            f'Rename column {initialColumnName}',
+            f'Rename column {initialColumnName}',
+            'Python',
+        )
         dlg.SetValue(self.tree.GetItemText(self.tree.GetSelection()))
 
         if dlg.ShowModal() == wx.ID_OK:
@@ -551,7 +545,12 @@ class CreatingTreePanel(wx.Panel):
     def onRenameTable(self, event):
         logger.debug('onRenameTable')
         oldTableName = initialTableName = self.tree.GetItemText(self.tree.GetSelection())
-        dlg = wx.TextEntryDialog(self, 'Rename table {} to'.format(initialTableName), 'Rename table {} '.format(initialTableName), 'Python')
+        dlg = wx.TextEntryDialog(
+            self,
+            f'Rename table {initialTableName} to',
+            f'Rename table {initialTableName} ',
+            'Python',
+        )
         dlg.SetValue(self.tree.GetItemText(self.tree.GetSelection()))
 
         if dlg.ShowModal() == wx.ID_OK:
@@ -568,7 +567,7 @@ class CreatingTreePanel(wx.Panel):
                     '''
                     logger.debug("TODO logic to rename table should go here.")
 #                     dropTableSql="DROP TABLE '{}'".format()
-                    alterTableSql = "ALTER TABLE '{}' RENAME TO {}".format(oldTableName, newTableName)
+                    alterTableSql = f"ALTER TABLE '{oldTableName}' RENAME TO {newTableName}"
                     db = ManageSqliteDatabase(connectionName=connectionName , databaseAbsolutePath=databaseAbsolutePath)
                     try:
                         db.executeText(alterTableSql)
@@ -583,7 +582,9 @@ class CreatingTreePanel(wx.Panel):
         newline = "\n"
         if self.GetTopLevelParent()._mgr.GetPane("consoleOutput").window.text.Value.strip() == "":
             newline = ""
-        self.GetTopLevelParent()._mgr.GetPane("consoleOutput").window.text.AppendText("{}{} {}".format(newline, strftime, exception))
+        self.GetTopLevelParent()._mgr.GetPane(
+            "consoleOutput"
+        ).window.text.AppendText(f"{newline}{strftime} {exception}")
     def onEditTable(self, event):
         logger.debug('onEditTable')
 
@@ -634,8 +635,7 @@ class CreatingTreePanel(wx.Panel):
     def onDisconnectDb(self, event):
         logger.debug('onDisconnectDb')
         del self.connDict[self.tree.GetItemText(self.tree.GetSelection())]
-        selectedItem = self.tree.GetSelection()
-        if selectedItem:
+        if selectedItem := self.tree.GetSelection():
             self.tree.DeleteChildren(selectedItem)
 
             # Todo change icon to dissable
@@ -766,62 +766,58 @@ class CreatingTreePanel(wx.Panel):
             data = self.tree.GetItemData(selectedItemId)
         connectionName = data['connection_name']
         databaseAbsolutePath = data['db_file_path']
-        
+
         self.deleteChildren(selectedItemId)
-        
-        if os.path.isfile(databaseAbsolutePath):     
-            dbObjects = ManageSqliteDatabase(connectionName=connectionName , databaseAbsolutePath=databaseAbsolutePath).getObject() 
+
+        if os.path.isfile(databaseAbsolutePath): 
+            dbObjects = ManageSqliteDatabase(connectionName=connectionName , databaseAbsolutePath=databaseAbsolutePath).getObject()
             isSuccessfullyConnected = True
             for dbObject in dbObjects[1]:
                 for k0, v0 in dbObject.items():
                     logger.debug("k0 : %s, v0: %s", k0, v0)
-                    data = dict()
-                    data['depth'] = 2
+                    data = {'depth': 2}
                     data['connection_name'] = connectionName
                     data['db_file_path'] = databaseAbsolutePath
                     image = 2
-                    nodeLabel = k0 + ' (' + str(len(v0)) + ')'
-                    
-                    child0 = self.addNode(targetNode=selectedItemId, nodeLabel=nodeLabel, pydata=data, image=image) 
-                    if 'table' == k0 :
-                        # setting image for 'table'
-                        image = 4
-                    elif 'index' == k0 :
+                    nodeLabel = f'{k0} ({len(v0)})'
+
+                    child0 = self.addNode(targetNode=selectedItemId, nodeLabel=nodeLabel, pydata=data, image=image)
+                    if k0 == 'index':
                         # setting image for 'index'
                         image = 5
-                    elif 'view' == k0 :
+                    elif k0 == 'table':
+                        # setting image for 'table'
+                        image = 4
+                    elif k0 == 'view':
                         # setting image for 'view'
                         image = 6
     #                 child = self.tree.AppendItem(selectedItemId, k0 + ' (' + str(len(items)) + ')', image=count)
                     for v00 in v0:
                         for k1, v1 in v00.items():
                             # Listing tables
-                            data = dict()
-                            data['depth'] = 3
+                            data = {'depth': 3}
                             data['connection_name'] = connectionName
                             data['db_file_path'] = databaseAbsolutePath
-                            nodeLabel = k1 
+                            nodeLabel = k1
                             if k0 == 'table':
                                 image = 4
                             child1 = self.addNode(targetNode=child0, nodeLabel=nodeLabel, pydata=data, image=image) 
-                            
+
 #                             logger.debug("k1 : %s, v1: %s", k1, v1)
                             if k0 == 'table':
-                                data = dict()
-                                data['depth'] = 4
+                                data = {'depth': 4}
                                 data['connection_name'] = connectionName
                                 data['db_file_path'] = databaseAbsolutePath
                                 # setting  image for 'Columns', 'Unique Keys', 'Foreign Keys', 'References'
                                 image = 11
-                                
-                                child1_1 = self.addNode(targetNode=child1, nodeLabel='Columns' + ' (' + str(len(v1)) + ')', pydata=data, image=image) 
-                                child1_2 = self.addNode(targetNode=child1, nodeLabel='Unique Keys', pydata=data, image=image) 
-                                child1_3 = self.addNode(targetNode=child1, nodeLabel='Foreign Keys', pydata=data, image=image) 
-                                child1_4 = self.addNode(targetNode=child1, nodeLabel='References', pydata=data, image=image) 
+
+                                child1_1 = self.addNode(targetNode=child1, nodeLabel='Columns' + ' (' + str(len(v1)) + ')', pydata=data, image=image)
+                                child1_2 = self.addNode(targetNode=child1, nodeLabel='Unique Keys', pydata=data, image=image)
+                                child1_3 = self.addNode(targetNode=child1, nodeLabel='Foreign Keys', pydata=data, image=image)
+                                child1_4 = self.addNode(targetNode=child1, nodeLabel='References', pydata=data, image=image)
                             for v2 in v1:
                                 if k0 == 'table':
-                                    data = dict()
-                                    data['depth'] = 5
+                                    data = {'depth': 5}
                                     data['connection_name'] = connectionName
                                     data['db_file_path'] = databaseAbsolutePath
     #                                  (cid integer, name text, type text, nn bit, dflt_value, pk bit)
@@ -839,17 +835,17 @@ class CreatingTreePanel(wx.Panel):
                                                 # setting VARCHAR image
                                                 image = 18
                                                 break
-                                    child2 = self.addNode(targetNode=child1_1, nodeLabel=nodeLabel, pydata=data, image=image) 
+                                    child2 = self.addNode(targetNode=child1_1, nodeLabel=nodeLabel, pydata=data, image=image)
         else:
-            updateStatus = "Unable to connect '" + databaseAbsolutePath + ".' No such file. "
+            updateStatus = f"Unable to connect '{databaseAbsolutePath}.' No such file. "
             self.consoleOutputLog(updateStatus)
-            font = self.GetTopLevelParent().statusbar.GetFont() 
-            font.SetWeight(wx.BOLD) 
-            self.GetTopLevelParent().statusbar.SetFont(font) 
-            self.GetTopLevelParent().statusbar.SetForegroundColour(wx.RED) 
+            font = self.GetTopLevelParent().statusbar.GetFont()
+            font.SetWeight(wx.BOLD)
+            self.GetTopLevelParent().statusbar.SetFont(font)
+            self.GetTopLevelParent().statusbar.SetForegroundColour(wx.RED)
             self.GetTopLevelParent().statusbar.SetStatusText(updateStatus, 1)
             logger.error(updateStatus)
-            
+
         return isSuccessfullyConnected
 
         
@@ -883,8 +879,7 @@ class DatabaseNavigationTree(ExpansionState, TreeCtrl):
             
     def AppendItem(self, parent, text, image=-1, wnd=None):
 
-        item = TreeCtrl.AppendItem(self, parent, text, image=image)
-        return item
+        return TreeCtrl.AppendItem(self, parent, text, image=image)
     
     def DeleteChildren(self, *args, **kwargs):
         return TreeCtrl.DeleteChildren(self, *args, **kwargs)
@@ -894,7 +889,7 @@ class DatabaseNavigationTree(ExpansionState, TreeCtrl):
         logger.debug('onkey')
         keycode = event.GetKeyCode()
         keyname = keyMap.get(keycode, None)
-                
+
         if keycode == wx.WXK_BACK:
             logger.debug("OnKeyDown: HAHAHAHA! I Vetoed Your Backspace! HAHAHAHA\n")
             return
@@ -906,18 +901,18 @@ class DatabaseNavigationTree(ExpansionState, TreeCtrl):
                     keycode = event.GetKeyCode()
                 keyname = "\"" + event.GetUnicodeKey() + "\""
                 if keycode < 27:
-                    keyname = "Ctrl-%s" % chr(ord('A') + keycode - 1)
-                
+                    keyname = f"Ctrl-{chr(ord('A') + keycode - 1)}"
+
             elif keycode < 256:
                 if keycode == 0:
                     keyname = "NUL"
                 elif keycode < 27:
-                    keyname = "Ctrl-%s" % chr(ord('A') + keycode - 1)
+                    keyname = f"Ctrl-{chr(ord('A') + keycode - 1)}"
                 else:
                     keyname = "\"%s\"" % chr(keycode)
             else:
-                keyname = "unknown (%s)" % keycode
-                
+                keyname = f"unknown ({keycode})"
+
         logger.debug("OnKeyDown: You Pressed : %s", keyname)
 
         event.Skip()            
@@ -990,8 +985,8 @@ class MyFileDropTarget(wx.FileDropTarget):
         self.dirwin = dirwin
 
     def OnDropFiles(self, x, y, fileNams):
-        logger.debug("dropFiles {}".format(fileNams))
-        
+        logger.debug(f"dropFiles {fileNams}")
+
         try:
             for fileAbsoluteName in fileNams:
                 if os.path.isdir(fileAbsoluteName):
@@ -1007,13 +1002,12 @@ class MyFileDropTarget(wx.FileDropTarget):
                     self.dirwin.recreateTree()           
         except Exception as ex:
             logger.error(ex)
-              
+
         return True
 
     def getConnectionName(self, filePath=None):
         head, tail = ntpath.split(filePath)
-        connectionName = "_".join(tail.split(sep=".")[:-1])
-        return connectionName
+        return "_".join(tail.split(sep=".")[:-1])
     
     def isSQLite3(self, fileName):
         ''' this is to check a valid SQLite file dropped.

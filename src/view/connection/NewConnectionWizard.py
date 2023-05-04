@@ -75,10 +75,7 @@ class SelectDatabaseNamePage(WizardPageSimple):
         wx.BeginBusyCursor()
         try:
             for category, items in self._treeList[1]:
-                self.searchItems[category] = []
-                for childItem in items:
-    #                 if SearchDemo(childItem, value):
-                    self.searchItems[category].append(childItem)
+                self.searchItems[category] = list(items)
         except Exception as e:
             logger.error(e, exc_info=True)
         wx.EndBusyCursor()
@@ -90,23 +87,20 @@ class SelectDatabaseNamePage(WizardPageSimple):
 #         searchMenu = self.filter.GetMenu().GetMenuItems()
 #         fullSearch = searchMenu[1].IsChecked()
         fullSearch = False   
-            
-        if evt:
-            if fullSearch:
-                # Do not`scan all the demo files for every char
-                # the user input, use wx.EVT_TEXT_ENTER instead
-                return
+
+        if evt and fullSearch:
+            # Do not`scan all the demo files for every char
+            # the user input, use wx.EVT_TEXT_ENTER instead
+            return
 
         expansionState = self.tree.GetExpansionState()
 
         current = None
-        item = self.tree.GetSelection()
-        if item:
-            prnt = self.tree.GetItemParent(item)
-            if prnt:
+        if item := self.tree.GetSelection():
+            if prnt := self.tree.GetItemParent(item):
                 current = (self.tree.GetItemText(item),
                            self.tree.GetItemText(prnt))
-                    
+
         self.tree.Freeze()
         self.tree.DeleteAllItems()
         self.root = self.tree.AddRoot("Connections")
@@ -122,11 +116,11 @@ class SelectDatabaseNamePage(WizardPageSimple):
         # was the size of the same label in the default font.
         if 'wxMSW' not in wx.PlatformInfo:
             treeFont.SetPointSize(treeFont.GetPointSize() + 2)
-            
+
         treeFont.SetWeight(wx.BOLD)
         catFont.SetWeight(wx.BOLD)
 #         self.tree.SetItemFont(self.root, treeFont)
-        
+
         firstChild = None
         selectItem = None
         filter = self.filter.GetValue()
@@ -188,7 +182,7 @@ class ConncectionSettings(WizardPageSimple):
             dbFileName=self.connectionNameTextCtrl.GetValue().replace(" ","_")+".sqlite"
             self.dbFileNameTextCtrl.SetValue(dbFileName)
     def dbbCallback(self, evt):
-        logger.debug('DirBrowseButton: {}\n'.format( evt.GetString()))
+        logger.debug(f'DirBrowseButton: {evt.GetString()}\n')
     def onMarkFile(self, event):
         logger.debug('onMarkFile')     
 
@@ -255,11 +249,7 @@ class CreateNewConncetionWixard(wx.Panel):
     def onPageChange(self, event):
         '''Executed after the page has changed.'''
         logger.debug('onPageChange')
-        if event.GetDirection():
-            dir = "forward"
-        else:
-            dir = "backward"
-
+        dir = "forward" if event.GetDirection() else "backward"
         page = event.GetPage()
         logger.debug("OnWizPageChanged: %s, %s\n" % (dir, page.__class__))
 
@@ -267,11 +257,7 @@ class CreateNewConncetionWixard(wx.Panel):
     def onPageChanging(self, event):
         '''Executed before the page changes, so we might veto it.'''
         logger.debug('onPageChanging')
-        if event.GetDirection():
-            dir = "forward"
-        else:
-            dir = "backward"
-
+        dir = "forward" if event.GetDirection() else "backward"
         page = event.GetPage()
         logger.debug("OnWizPageChanging: %s, %s\n" % (dir, page.__class__))
 

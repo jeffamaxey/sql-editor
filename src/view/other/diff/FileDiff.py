@@ -170,7 +170,7 @@ class PyDiff(wx.Frame):
     def OnKey(self, event):
         if self.rightView.GetValue() != self.rightViewOrig:
             self.modify = True
-            self.rightLbl.SetLabel("* " + self.rightFileName)
+            self.rightLbl.SetLabel(f"* {self.rightFileName}")
         event.Skip()
 
     def OnScrollLeft(self, event):
@@ -260,9 +260,9 @@ class PyDiff(wx.Frame):
         tb.Realize()
 
     def OnUseTheirs(self, event):
-        if self.activeLine == None:
+        if self.activeLine is None:
             return
-        
+
         self.leftView.GotoLine(self.activeLine)
         lineText = self.leftView.GetCurLine()[0]
         self.rightView.GotoLine(self.activeLine)
@@ -270,9 +270,9 @@ class PyDiff(wx.Frame):
         self.rightView.InsertText(self.rightView.GetCurrentPos(), lineText)
 
     def OnUp(self, event):
-        if self.activeLine == None:
+        if self.activeLine is None:
             self.activeLine = self.specialLines[0]
-        
+
         self.specialLines.reverse()
         for specialLine in self.specialLines:
             if specialLine < self.activeLine:
@@ -282,9 +282,9 @@ class PyDiff(wx.Frame):
         self.specialLines.reverse()
     
     def OnDown(self, event):
-        if self.activeLine == None:
+        if self.activeLine is None:
             self.activeLine = self.specialLines[0]
-        
+
         for specialLine in self.specialLines:
             if specialLine > self.activeLine:
                 self.setActiveLine(specialLine)
@@ -292,13 +292,11 @@ class PyDiff(wx.Frame):
 
     def OnSave(self, event):
         print("do save...")
-        f = open(self.rightFileName, 'w')
-        lastPos = self.rightView.GetLineEndPosition(self.rightView.GetLineCount())
-        for i in range(lastPos):
-            if self.rightView.GetStyleAt(i) != self.BLANK_STYLE:
-                f.write(chr(self.rightView.GetCharAt(i)))
-        f.close()
-        
+        with open(self.rightFileName, 'w') as f:
+            lastPos = self.rightView.GetLineEndPosition(self.rightView.GetLineCount())
+            for i in range(lastPos):
+                if self.rightView.GetStyleAt(i) != self.BLANK_STYLE:
+                    f.write(chr(self.rightView.GetCharAt(i)))
         print("do update...")
         self.doUpdate()
         
@@ -313,13 +311,13 @@ class PyDiff(wx.Frame):
         # set default windows end-of-line mode (\r\n)
         self.leftView.SetEOLMode(wx.stc.STC_EOL_CRLF)
         self.rightView.SetEOLMode(wx.stc.STC_EOL_CRLF)
-        
+
         self.leftView.StyleSetSpec(stc.STC_STYLE_DEFAULT, "size:%d,face:%s" % (FACE_SIZE, FACE3))
         self.rightView.StyleSetSpec(stc.STC_STYLE_DEFAULT, "size:%d,face:%s" % (FACE_SIZE, FACE3))
 
         self.leftView.StyleClearAll()
         self.rightView.StyleClearAll()
-        
+
         leftText = ""
         rightText = ""
         pluses = []
@@ -373,12 +371,12 @@ class PyDiff(wx.Frame):
                     leftText += " \n"
                     end = len(leftText)
                     blankLeft.append([start,end-start])
-                    
+
                     start = len(rightText)
                     rightText += line
                     end = len(rightText)
                     additionPos.append([start,end-start, None])
-                  
+
             elif tag == "delete":
                 for line in a[alo:ahi]:
                     start = len(leftText)
@@ -410,7 +408,7 @@ class PyDiff(wx.Frame):
                         intraAdds.append([startb + bj[0], bj[1] - bj[0], True])
             else:
                 if DEBUG: import pdb; pdb.set_trace()
-                raise RuntimeError("Diff operation unknown: %s" % tag)
+                raise RuntimeError(f"Diff operation unknown: {tag}")
 
 
         def updateLinesNumbers(ed, lbl, greyStyle):
@@ -423,9 +421,9 @@ class PyDiff(wx.Frame):
                     # TODO: use MARGINSETTEXT
                 else:
                     lines += "\n"
-            
+
             lbl.SetLabel(lines)
-               
+
         def setupStyle(self, ed, marker, markerColor, linesLbl, blankLines, diffList, intraDiffs):
             ed.StartStyling(0, 0xff)
             styleid = 20
@@ -433,7 +431,7 @@ class PyDiff(wx.Frame):
             ed.SetStyling(ed.GetLength(), styleid)
             markerStyleId = 2
             markerStyleIdMod = 4
-            
+
             ed.MarkerDefine(markerStyleId, marker, markerColor, markerColor)
             ed.MarkerDefine(markerStyleIdMod, wx.stc.STC_MARK_CHARACTER+ord("!"), "dark yellow", "light gray")
 
@@ -461,14 +459,14 @@ class PyDiff(wx.Frame):
                 start, delta, changed = diffline
                 ed.StartStyling(start, 0xff)
                 ed.SetStyling(delta, self.INTRA_STYLE)
-            
+
             updateLinesNumbers(ed, linesLbl, self.BLANK_STYLE)
-        
+
         self.leftView.SetValue(leftText)
         self.rightView.SetValue(rightText)
         setupStyle(self, self.leftView, stc.STC_MARK_MINUS, "red", self.leftLinesLbl, blankLeft, subtractionPos, intraSubs)
         setupStyle(self, self.rightView, stc.STC_MARK_PLUS, "blue", self.rightLinesLbl, blankRight, additionPos, intraAdds)
-        
+
         self.calculateSpecialLines(subtractionPos, additionPos)
 
         self.leftView.EmptyUndoBuffer()
@@ -481,17 +479,16 @@ class PyDiff(wx.Frame):
         #self.setActiveLine(3)
 
     def calculateSpecialLines(self, subtractionPos, additionPos):
-        specialLines = []
         specialPositions = [pos[0] for pos in subtractionPos]
-        for line in specialPositions:
-            specialLines.append(self.leftView.LineFromPosition(line))
+        specialLines = [
+            self.leftView.LineFromPosition(line) for line in specialPositions
+        ]
         print("\n")
         specialPositions = [pos[0] for pos in additionPos]
-        for line in specialPositions:
-            specialLines.append(self.rightView.LineFromPosition(line))
-        
-        self.specialLines = list(set(specialLines))
-        self.specialLines.sort()
+        specialLines.extend(
+            self.rightView.LineFromPosition(line) for line in specialPositions
+        )
+        self.specialLines = sorted(set(specialLines))
 
     def setActiveLine(self, lineNum, noMove = False):
         if self.activeLine != None:

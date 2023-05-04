@@ -52,10 +52,9 @@ class SqlType():
             defultValueText = ''
             if column.defultValue and str(column.primaryKey) == "0" and str(column.autoIncrement) == "0":
                 defultValueText = f'DEFAULT {column.defultValue}'
-            columnText += f"\n`{column.name}` {column.dataType}{primaryKeyText}{nullableText}{autoIncrementText}{uniqueText}{defultValueText}," 
+            columnText += f"\n`{column.name}` {column.dataType}{primaryKeyText}{nullableText}{autoIncrementText}{uniqueText}{defultValueText},"
         columnText = columnText[:-1]
-        sql = f'CREATE TABLE IF NOT EXISTS `{self.name}` ({columnText});'
-        return sql
+        return f'CREATE TABLE IF NOT EXISTS `{self.name}` ({columnText});'
 
     def __repr__(self):
         return f'''SqlType(type={self.type}, name={self.name},tbl_name={self.tbl_name},rootpage={self.rootpage} 
@@ -129,8 +128,8 @@ class SQLExecuter():
         @param rows: list of row dictionary of column values
         '''
         for row in rows:
-            cols = ', '.join('"{}"'.format(col) for col in row.keys())
-            vals = ', '.join(':{}'.format(col) for col in row.keys())
+            cols = ', '.join(f'"{col}"' for col in row.keys())
+            vals = ', '.join(f':{col}' for col in row.keys())
             sql = f'INSERT INTO "{table}" ({cols}) VALUES ({vals})'
             try:
                 with self.conn:    
@@ -144,12 +143,11 @@ class SQLExecuter():
     def sqlite_insert_or_update(self, table, rows):
         try:
             for row in rows:
-                cols = ', '.join('"{}"'.format(col) for col in row.keys())
-                vals = ', '.join(':{}'.format(col) for col in row.keys())
+                cols = ', '.join(f'"{col}"' for col in row.keys())
+                vals = ', '.join(f':{col}' for col in row.keys())
                 sql = 'INSERT OR REPLACE INTO "{0}" ({1}) VALUES ({2})'.format(table, cols, vals)
                 self.conn.cursor().execute(sql, row)
             self.conn.commit()
-        # Catch the exception
         except Exception as e:
             logger.error(e, exc_info=True)
             # Roll back any change if something goes wrong
@@ -158,28 +156,29 @@ class SQLExecuter():
     
     def sqlite_select(self, table):
         
-        returnRows = list()
+        returnRows = []
         try:
             with self.conn:    
-                cur = self.conn.cursor() 
+                cur = self.conn.cursor()
                 cur.execute(f"SELECT * FROM {table}")
                 rows = cur.fetchall()
-                for row in rows:
-                    returnRows.append(row)
+                returnRows.extend(iter(rows))
         except Exception as e:
             logger.error(e, exc_info=True)
-            
+
         return returnRows
     
     def getColumns(self, tableName=None):
         logger.debug(f'tableName: `{tableName}`')
-        columns = list()
+        columns = []
         try:
             with self.conn:    
-                cur = self.conn.cursor() 
+                cur = self.conn.cursor()
                 rows = cur.execute(f"pragma table_info(`{tableName}`)").fetchall()
-                for row in rows:
-                    columns.append(Column(row[0], row[1], row[2], row[3], row[4], row[5]))
+                columns.extend(
+                    Column(row[0], row[1], row[2], row[3], row[4], row[5])
+                    for row in rows
+                )
         except Exception as e:
             logger.error(e, exc_info=True)
             self.conn.rollback()
@@ -190,18 +189,13 @@ class SQLExecuter():
         logger.debug('tableName: %s', tableName)
         try:
             with self.conn:    
-                cur = self.conn.cursor() 
+                cur = self.conn.cursor()
                 sql = f"SELECT name, sql FROM sqlite_master WHERE type='table' AND name = `{tableName}`;"
                 rows = cur.execute(sql).fetchall()
                 tableCreateStmt = rows[0][1]
                 match = re.findall(r'[^[]*\[([^]]*)\]', tableCreateStmt)
-                columns = set(match)
-                if columns:
+                if columns := set(match):
                     logger.debug(columns)
-#                 tableCreateStmt.replace(/^[^\(]+\(([^\)]+)\)/g, '$1').split(',')
-#                 logger.debug(rows)
-#                 for idx, item in enumerate(rows):
-#                     logger.debug(item)
         except Exception as e:
             logger.error(e, exc_info=True)
             self.conn.rollback()
@@ -213,23 +207,20 @@ class SQLExecuter():
         '''
         logger.debug('text: %s', text)
         error = 'success'
-        sqlOutput = dict()
+        sqlOutput = {}
         try:
             with self.conn:    
-                cur = self.conn.cursor() 
+                cur = self.conn.cursor()
 #                 logger.debug('before')
                 if text.strip().lower().startswith('update'):
                     cur.execute(text)
                 else:
                     rows = cur.execute(text).fetchall()
 #                     logger.debug(rows)
-                    logger.debug(cur.description) 
+                    logger.debug(cur.description)
     #                 logger.debug(rows)
                     if cur.description:
-                        headerList = list()
-                        for idx, desc in enumerate(cur.description):
-        #                     logger.debug(idx, desc)
-                            headerList.append(desc[0])
+                        headerList = [desc[0] for desc in cur.description]
                         sqlOutput[0] = tuple(headerList)
                         for idx, item in enumerate(rows):
                             sqlOutput[idx + 1] = item
@@ -322,12 +313,12 @@ class SQLExecuter():
         '''
         addNewConnectionRow adding a new row of connection
         '''
-        row = dict()
-        row['connection_name'] = connectionName
-        row['db_file_path'] = dbFilePath
-        row['dbms_id'] = 1
-        rowList = list()
-        rowList.append(row)
+        row = {
+            'connection_name': connectionName,
+            'db_file_path': dbFilePath,
+            'dbms_id': 1,
+        }
+        rowList = [row]
         self.sqlite_insert('conns', rowList)
 #         "insert into conns (connection_name, db_file_path, dbms_id) values (  'database_sqlite_2','/docs/github/OpalDatabaseVisualizer-v1/src/sqlite_executer/_opal_2.sqlite', 1);"
 
@@ -374,21 +365,20 @@ class SQLExecuter():
         assumption , conns and sql_log table will available.
         
         '''
-#         self.createOpalTables()
-        dbList = self.sqlite_select("conns")
-        return dbList
+        return self.sqlite_select("conns")
 
     def getContectedObject(self, connectionName, databaseAbsolutePath):
-        dbObjects = ManageSqliteDatabase(connectionName=connectionName , databaseAbsolutePath=databaseAbsolutePath).getObject()
-        return dbObjects
+        return ManageSqliteDatabase(
+            connectionName=connectionName,
+            databaseAbsolutePath=databaseAbsolutePath,
+        ).getObject()
     
     def getDbFilePath(self, connectionName=None):
         dbFilePath = None
         if connectionName:
             sqlScript = f"select db_file_path from conns where connection_name= '{connectionName}'"
-            cur = self.conn.cursor()   
-            rows = cur.execute(sqlScript).fetchone()
-            if rows:
+            cur = self.conn.cursor()
+            if rows := cur.execute(sqlScript).fetchone():
                 dbFilePath = rows[0]
         return dbFilePath
 
@@ -427,24 +417,24 @@ class SQLUtils():
             sqlText = "select tbl_name from sqlite_master order by tbl_name;"
             tbl_name_list = manageSqliteDatabase.executeSelectQuery(sqlText)
             logger.debug(tbl_name_list)
-            
+
             tablePresent = False
             i = 1
             while not tablePresent:
-                tableName = 'Table_{}'.format(i)
-                if tuple([tableName]) in tbl_name_list:
-                    logger.info(tableName + ' already present')
+                tableName = f'Table_{i}'
+                if (tableName,) in tbl_name_list:
+                    logger.info(f'{tableName} already present')
                     i += 1
                 else:
                     tablePresent = True
-             
+
         except Exception as e:
             logger.error(e, exc_info=True)
-        
+
         return tableName
     
     def importingData(self, connectionName=None, sqlList=None):
-        logger.info('importingData to {}'.format(connectionName))
+        logger.info(f'importingData to {connectionName}')
         count = 0
         try:
             manageSqliteDatabase = ManageSqliteDatabase(connectionName=connectionName, databaseAbsolutePath=self.getDbFilePath(connectionName))
@@ -453,7 +443,7 @@ class SQLUtils():
                 count += 1
         except Exception as e:
             count -= 1
-            logger.error(e, exc_info=True)      
+            logger.error(e, exc_info=True)
         importStatus = f"Total rows {count} / {len(sqlList) - 1} inserted."
         logger.info(f"Total rows {count} / {len(sqlList) - 1} inserted.")
         return importStatus
@@ -525,45 +515,39 @@ class ManageSqliteDatabase():
         @return: Method returns all database object [ table, view, index] from the given sqlite database path
         '''
         con = None
-        
+
         try:
-            cur = self.conn.cursor()    
+            cur = self.conn.cursor()
             cur.execute('SELECT SQLITE_VERSION()')
             data = cur.fetchone()
-            logger.debug("SQLite version: %s" % data)   
+            logger.debug(f"SQLite version: {data}")
             cur.execute("select tbl_name from sqlite_master where type='table';")
             types = cur.execute("select distinct type from sqlite_master;").fetchall()
-            databaseList = list()
-            dbObjects = list()
+            databaseList = []
+            dbObjects = []
             selection = None
             for sqliteType in types:
-                tObjectArrayList = list()
+                tObjectArrayList = []
                 if sqliteType[0] == 'table':
                     selection = 'tbl_name'
-                elif sqliteType[0] == 'index':
-                    selection = 'name'
-                elif sqliteType[0] == 'trigger':
+                elif sqliteType[0] in ['index', 'trigger']:
                     selection = 'name'
                 query = f"select {selection} from sqlite_master where type='{sqliteType[0]}' order by tbl_name AND name NOT LIKE 'sqlite_%' AND name!='SAMPLE' ;"
                 logger.debug(query)
                 tObjectList = cur.execute(query).fetchall()
-                tableColumnList = list()
+                tableColumnList = []
                 for tObj in tObjectList:
                     if sqliteType[0] == 'table':
-                        tableColumnsOrIndexesSql = "PRAGMA {}_info('{}');".format(sqliteType[0], tObj[0])
+                        tableColumnsOrIndexesSql = f"PRAGMA {sqliteType[0]}_info('{tObj[0]}');"
                         tableColumnsOrIndexesList = cur.execute(tableColumnsOrIndexesSql).fetchall()
-                        tableColumnsOrIndexes = list()
-                        for objChild in tableColumnsOrIndexesList:
-                            tableColumnsOrIndexes.append(objChild)
+                        tableColumnsOrIndexes = list(tableColumnsOrIndexesList)
                         tableColumnList.append({tObj[0]: tableColumnsOrIndexes})
                     if sqliteType[0] == 'index':
-                        tableColumnsOrIndexesSql = "PRAGMA {}_info('{}');".format(sqliteType[0], tObj[0])
+                        tableColumnsOrIndexesSql = f"PRAGMA {sqliteType[0]}_info('{tObj[0]}');"
                         tableColumnsOrIndexesList = cur.execute(tableColumnsOrIndexesSql).fetchall()
-                        tableColumnsOrIndexes = list()
-                        for objChild in tableColumnsOrIndexesList:
-                            tableColumnsOrIndexes.append(objChild[2])
+                        tableColumnsOrIndexes = [objChild[2] for objChild in tableColumnsOrIndexesList]
                         tableColumnList.append({tObj[0]: tableColumnsOrIndexes})
-                        
+
                     if sqliteType[0] == 'view':
                         tableColumnList.append({tObj[0]: []})
                         logger.debug('view')
@@ -577,17 +561,16 @@ class ManageSqliteDatabase():
         finally:
             if self.conn:
                 self.conn.close()
-        databaseList.append(self.connectionName)
-        databaseList.append(dbObjects)
+        databaseList.extend((self.connectionName, dbObjects))
         return databaseList        
 
     def parseSelectSql(self, sql=None):
-        parsedSelect = {}
         sqlParse = sqlparse.parse(sql)
-        for token in sqlParse[0].tokens:
-            if token._get_repr_name() == 'Identifier':
-                parsedSelect ['tableName'] = token.value
-        return parsedSelect
+        return {
+            'tableName': token.value
+            for token in sqlParse[0].tokens
+            if token._get_repr_name() == 'Identifier'
+        }
     
     def parseInsertSql(self, sql=None):
         parsedInsert = {
@@ -653,9 +636,7 @@ class ManageSqliteDatabase():
                 pass
             elif platform.system() == 'Windows':
                 filename = str(filename).replace('\\', '\\\\')
-                filename = str(filename).replace("'", "")
-            elif platform.system() == 'Darwin':
-                pass
+                filename = filename.replace("'", "")
             filePath = os.path.normpath(filename)
 #             filePath=pathlib.Path(filename)
             with open(filePath, 'rb') as file:
@@ -667,7 +648,7 @@ class ManageSqliteDatabase():
     def getColumnsDatatype(self, cur, tableName):
         columns = []
         tableName = str(tableName).replace("'", "")
-        tableName = str(tableName).replace("`", "")
+        tableName = tableName.replace("`", "")
         rows = cur.execute(f"pragma table_info('{tableName}');").fetchall()
         columnDatatype = []
         for row in rows:
@@ -680,27 +661,17 @@ class ManageSqliteDatabase():
         ''' This method takes input text to execute in database.
         @return script output as dict
         '''
-        sqlOutput = dict()
+        sqlOutput = {}
         try:
             with self.conn:    
                 cur = self.conn.cursor() 
 
-                if text.count(';') > 1 :
+                if text.count(';') > 1:
                     result = cur.executescript(text)
                 elif text.strip().lower().startswith(('update', 'drop', 'alter')):
                     cur.execute(text)
-#                 elif text.strip().lower().startswith(('insert')):
-#                     parsedInsert = self.parseInsertSql(sql=text)
-#                     tableName = parsedInsert.get('tableName').replace('`', '')
-#                     tableName = tableName.replace("'", '')
-#                     columnsDatatype = self.getColumnsDatatype(cur, tableName)
-# #                     sqlOutput[-1] = columnDatatype
-#                     sqlText, dataTuple = self.createInsertSql(parsedInsert, columnsDatatype)
-#                     result = cur.execute(sqlText, dataTuple)
                 else:
-                    if text.strip().lower().startswith(('pragma')):
-                        pass
-                    else:
+                    if not text.strip().lower().startswith(('pragma')):
                         try:
                             parsedSelect = self.parseSelectSql(sql=text)
                             if parsedSelect and parsedSelect.get('tableName'):
@@ -711,12 +682,10 @@ class ManageSqliteDatabase():
                             logger.error(e)
                             logger.error(text)
                             logger.error(parsedSelect)
-                        
+
                     rows = cur.execute(text).fetchall()
                     if cur.description:
-                        headerList = list()
-                        for idx, desc in enumerate(cur.description):
-                            headerList.append(desc[0])
+                        headerList = [desc[0] for desc in cur.description]
                         sqlOutput[0] = tuple(headerList)
                         for idx, item in enumerate(rows):
                             items = []
@@ -725,7 +694,7 @@ class ManageSqliteDatabase():
                                     v = '-______-NULL'  # this is to make a distinguish between Null
 #                                 elif self.isBlob(v):
 #                                     v = '-______-BLOB'
-                                    
+
                                 items.append(v)
 #                             item=['-______-Null' if v is None else v for v in item] 
                             sqlOutput[idx + 1] = items
@@ -733,16 +702,18 @@ class ManageSqliteDatabase():
             logger.error(e, exc_info=True)
             logger.error(text)
             raise e
-            self.conn.rollback()
         return sqlOutput 
     
     def isBlob(self, data):
         blob = False
         try:
-            if data != None:  
-                if isinstance(data, (bytes, bytearray)) and data.startswith(b'\x89'):
+            if (
+                data != None
+                and isinstance(data, (bytes, bytearray))
+                and data.startswith(b'\x89')
+            ):
     #             if text != None and not isinstance(text, int) and not isinstance(text, str) and text.startswith(b'\x89'):
-                    blob = True
+                blob = True
         except:
             logger.error('isBlob')
         return blob
@@ -760,22 +731,21 @@ class ManageSqliteDatabase():
         @param rows: list of row dictionary of column values
         '''
         for row in rows:
-            cols = ', '.join('"{}"'.format(col) for col in row.keys())
-            vals = ', '.join(':{}'.format(col) for col in row.keys())
+            cols = ', '.join(f'"{col}"' for col in row.keys())
+            vals = ', '.join(f':{col}' for col in row.keys())
             sql = f'INSERT INTO "{table}" ({cols}) VALUES ({vals});'
-            
+
             self.conn.cursor().execute(sql, row)
         self.conn.commit()
         
     def sqlite_insert_or_update(self, table, rows):
         try:
             for row in rows:
-                cols = ', '.join('"{}"'.format(col) for col in row.keys())
-                vals = ', '.join(':{}'.format(col) for col in row.keys())
+                cols = ', '.join(f'"{col}"' for col in row.keys())
+                vals = ', '.join(f':{col}' for col in row.keys())
                 sql = f'INSERT OR REPLACE INTO "{table}" ({cols}) VALUES ({vals});'
                 self.conn.cursor().execute(sql, row)
             self.conn.commit()
-        # Catch the exception
         except Exception as e:
             logger.error(e, exc_info=True)
             # Roll back any change if something goes wrong
@@ -784,25 +754,26 @@ class ManageSqliteDatabase():
     
     def sqlite_select(self, tableName=None):
         
-        returnRows = list()
+        returnRows = []
         if tableName:
             with self.conn:    
-                cur = self.conn.cursor() 
+                cur = self.conn.cursor()
                 cur.execute(f"SELECT * FROM {tableName};")
                 rows = cur.fetchall()
-                for row in rows:
-                    returnRows.append(row)
+                returnRows.extend(iter(rows))
         return returnRows
     
     def getColumns(self, tableName=None):
         logger.debug(f'tableName: {tableName}')
-        columns = list()
+        columns = []
         try:
             with self.conn:    
-                cur = self.conn.cursor() 
+                cur = self.conn.cursor()
                 rows = cur.execute(f"pragma table_info('{tableName}');").fetchall()
-                for row in rows:
-                    columns.append(Column(row[0], row[1], row[2], row[3], row[4], row[5]))
+                columns.extend(
+                    Column(row[0], row[1], row[2], row[3], row[4], row[5])
+                    for row in rows
+                )
         except Exception as e:
             logger.error(e, exc_info=True)
             self.conn.rollback()
@@ -827,8 +798,7 @@ class ManageSqliteDatabase():
             else:
                 columnsNameText += f", `{column.name}`=''"
         columnsNameText = columnsNameText[1:]
-        sql = f'''UPDATE `{tableName}` \nSET {columnsNameText} {whereClause};'''
-        return sql
+        return f'''UPDATE `{tableName}` \nSET {columnsNameText} {whereClause};'''
 
     def getDeleteForTable(self, tableName=None):
         whereClause = None
@@ -841,8 +811,7 @@ class ManageSqliteDatabase():
                 else:
                     whereClauseValue = ''
                 whereClause = f'\nWHERE `{column.name}`={whereClauseValue}'
-        sql = f'DELETE FROM `{tableName}` {whereClause};'
-        return sql
+        return f'DELETE FROM `{tableName}` {whereClause};'
 
     def getInsertForTable(self, tableName=None):
         columns = self.getColumns(tableName)
@@ -854,15 +823,13 @@ class ManageSqliteDatabase():
             else:
                 columnsValueList.append("NULL")
         columnsValueText = ",".join(columnsValueList)
-        insertSql = f'''INSERT OR REPLACE INTO `{tableName}` ({columnsNameText}) \nVALUES ({columnsValueText});'''
-        return insertSql
+        return f'''INSERT OR REPLACE INTO `{tableName}` ({columnsNameText}) \nVALUES ({columnsValueText});'''
 
     def getSelectForTable(self, tableName=None):
         columns = self.getColumns(tableName)
         columnsNameText = ", ".join([f"`{column.name}`" for column in columns])
 
-        selectSql = f'''SELECT {columnsNameText} \nFROM `{tableName}`; '''
-        return selectSql
+        return f'''SELECT {columnsNameText} \nFROM `{tableName}`; '''
     
     def getColumn(self, tableName=None):
         try:

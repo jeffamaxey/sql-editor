@@ -21,32 +21,30 @@ class SqlParser():
 #         pattern='''(\s*CREATE TABLE\s*)("?\w+"?)\s+(\(\s+((("?\w+"?)*\s*(UNIQUE\s+(\(\w+\))|PRIMARY KEY\s+(\(\w+\))|FLOAT|DATETIME|INTEGER\s*(NOT NULL)*|VARCHAR\(\d*\)),?\s+))*\s*\))(\s*;?)'''
 #         pattern='''(\s*CREATE TABLE\s*)("?\w+"?)\s+(\(\s+("?\w+"?)\s+((UNIQUE\s+(\(\w+\))|PRIMARY KEY\s+(\(\w+\))|FLOAT|DATETIME|INTEGER\s*(NOT NULL)*|VARCHAR\(\d*\))))'''
         pattern = '''\s*(CREATE TABLE)\s+("?\w+"?)\s+\(\s+(("?\w+"?\s+(INTEGER|FLOAT|DATETIME|VARCHAR\(\d*\))\s*(NOT NULL|PRIMARY KEY)?,?\s*)*)\s+(((\s*(PRIMARY KEY|UNIQUE)\s+\(\w+\)),?\s)*)(\)\s*;?)'''
-        matchObj = re.match(pattern, createSql, re.I)
-        
-        if matchObj:
+        if matchObj := re.match(pattern, createSql, re.I):
             logger.debug ("matchObj.groups() : ", matchObj.groups())
 #             for g in matchObj.groups():
 #                 logger.debug(g)
-            logger.debug ("matchObj.group(0) : ", matchObj.group(0))
-            logger.debug ("matchObj.group(1) : ", matchObj.group(1))
-            logger.debug ("matchObj.group(2) : ", matchObj.group(2))
+            logger.debug("matchObj.group(0) : ", matchObj[0])
+            logger.debug("matchObj.group(1) : ", matchObj[1])
+            logger.debug("matchObj.group(2) : ", matchObj[2])
         else:
             logger.debug ("No match!!")
     
     def getColumn(self, createSql=None):
-        columnDict = dict()
+        columnDict = {}
         if createSql:
             # picking bracket part of create sql
             h_0, t_0 = createSql.split("(", 1)
             h_1, t_1 = t_0.rsplit(")", 1)
-            logger.debug("columns: {}".format(h_1))
+            logger.debug(f"columns: {h_1}")
             logger.debug (t_0)
-            
-            
+
+
             columnText=self.getAllConstrantInSeparteLine(columnText=h_1)
-            
+
             # removing constrinat as last line. primary key , unique key , foreign key
-            
+
             columnPattern = r'''((('|"|`).+?\3)|(\[?\w+\]?))\s*((?i)\bANY\b|(?i)\bJSON\b|(?i)\bINT\b|(?i)\bINTEGER\b|(?i)\bTINYINT\b|(?i)\bSMALLINT\b|(?i)\bMEDIUMINT\b|(?i)\bBIGINT\b|(?i)\bUNSIGNED BIG INT\b|(?i)\bINT2\b|(?i)\bINT8\b|(?i)CHARACTER\([0-9]{3}\)|(?i)\bVARYING CHARACTER\([0-9]{3}\)|(?i)\bNCHAR\([0-9]{3}\)\b|(?i)\bNATIVE CHARACTER\([0-9]{3}\)\b|(?i)\bNVARCHAR\([0-9]+\)|(?i)\bFLOAT\b|(?i)\bNUMERIC\b(\([0-9]+,[0-9]+\))?|(?i)\bDECIMAL\(d+\)\b|(?i)\bBOOLEAN\b|(?i)\bDATE\b|(?i)\bDATETIME\b|(?i)\[timestamp\]|(?i)\bREAL\b|(?i)\bDOUBLE\b|(?i)\bDOUBLE PRECISION\b|(?i)\bCLOB\b|(?i)\bBLOB\b|(?i)\bTEXT\b|(?i)\bDATETIME\b|(?i)VARCHAR\([0-9]*\))?\s*((?i)\bHIDDEN\b|(?i)\bNULL\b|(?i)\bNOT NULL\b|(?i)\bPRIMARY KEY\b\s*(ASC|DSC)?)?((?i)\bDEFAULT\b .*)?(\s+(?i)\bAUTOINCREMENT\b|(?i)\bUNIQUE\b)?,?\s*(-{2}.*)?'''
             columnDict[0] = ("#", "Name", "Datatype", "PRIMARY KEY", "Nullable", "Unique", "Auto increment", "Hidden", "Default data","Description")
             # this is column name
@@ -54,8 +52,7 @@ class SqlParser():
             if columnMatchObj:
                 logger.info(columnMatchObj.groups())
             logger.debug(columnMatchObj)
-            columnObj = re.findall(columnPattern, columnText, re.MULTILINE)
-            if columnObj:
+            if columnObj := re.findall(columnPattern, columnText, re.MULTILINE):
                 for idx, columnName in enumerate(columnObj):
                     default_data = None
                     if columnName[6] and 'default' in columnName[6].lower():
@@ -81,8 +78,8 @@ class SqlParser():
                     columnNameInfo = [idx + 1, columnName[0], columnName[4], primaryKey, nullable, unique, auto_increment,hidden, default_data, description] 
                     columnDict[idx + 1] = tuple(columnNameInfo)
             else:
-                logger.debug ("columns : {}".format(h_1))      
-        
+                logger.debug(f"columns : {h_1}")      
+
 #         createTablePattern='''\s*(CREATE TABLE)\s+((('|").*?\4)|("?\w+"?))\s+\(\s*((((('|").*?\10)|("?\w+"?))\s+(INTEGER|FLOAT|DATETIME|VARCHAR\(\d*\))\s*(NOT NULL|PRIMARY KEY)?,?\s*)*)\s+(((\s*(PRIMARY KEY|UNIQUE)\s+\(\w+\)),?\s)*)(\)\s*;?)'''
 #         tableMatchObj = re.match( createTablePattern, createSql, re.I)
 #         

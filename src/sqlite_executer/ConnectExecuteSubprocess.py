@@ -57,4 +57,3 @@ if __name__ == '__main__':
     sqliteConnect=SqliteConnect()
     sqliteConnect.getSqlitePath()
     sqliteConnect.executeProcess()
-    pass

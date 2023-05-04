@@ -104,9 +104,7 @@ def StyleText(stc, start, end):
     eline = stc.LineFromPosition(end)
 
     state = stc.GetLineState(line) - 1
-    if state < 0:
-        state = 0
-
+    state = max(state, 0)
     for ln in range(line, eline + 1):
         text = stc.GetLine(ln).encode('utf-8')
         len_text = len(text)
@@ -114,12 +112,11 @@ def StyleText(stc, start, end):
 
         if len(text) == 0:
             state = 0
-        else:
-            if len(text) > 0:
-                ch = text[0]
-                ix = issl_table.find(ch)
-                if ix >= 0:
-                    state = ix + 1
+        elif len(text) > 0:
+            ch = text[0]
+            ix = issl_table.find(ch)
+            if ix >= 0:
+                state = ix + 1
 
         stc.StartStyling(stc.PositionFromLine(ln), 0xFF)
         stc.SetStyling(len_text, state)

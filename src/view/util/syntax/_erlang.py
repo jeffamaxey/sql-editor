@@ -14,6 +14,7 @@ AUTHOR: Cody Precord
 
 """
 
+
 __author__ = "Cody Precord <cprecord@editra.org>"
 __svnid__ = "$Id: _erlang.py 68798 2011-08-20 17:17:05Z CJP $"
 __revision__ = "$Revision: 68798 $"
@@ -55,20 +56,24 @@ SYNTAX_ITEMS = [(stc.STC_ERLANG_ATOM, 'default_style'),       # need new tag
                 (stc.STC_ERLANG_UNKNOWN, 'unknown_style'),
                 (stc.STC_ERLANG_VARIABLE, 'default_style')]   # need custom?
 
-# Version specific 
+# Version specific
 if wx.VERSION >= (2, 9, 0, 0, ''):
-    SYNTAX_ITEMS.append((stc.STC_ERLANG_ATOM_QUOTED, 'default_style')) # TODO
-    SYNTAX_ITEMS.append((stc.STC_ERLANG_BIFS, 'default_style')) # TODO
-    SYNTAX_ITEMS.append((stc.STC_ERLANG_COMMENT_DOC, 'dockey_style')) # TODO
-    SYNTAX_ITEMS.append((stc.STC_ERLANG_COMMENT_DOC_MACRO, 'dockey_style')) # TODO
-    SYNTAX_ITEMS.append((stc.STC_ERLANG_COMMENT_FUNCTION, 'comment_style')) # TODO
-    SYNTAX_ITEMS.append((stc.STC_ERLANG_COMMENT_MODULE, 'comment_style')) # TODO
-    SYNTAX_ITEMS.append((stc.STC_ERLANG_MACRO_QUOTED, 'default_style')) # TODO
-    SYNTAX_ITEMS.append((stc.STC_ERLANG_MODULES, 'default_style')) # TODO
-    SYNTAX_ITEMS.append((stc.STC_ERLANG_MODULES_ATT, 'default_style')) # TODO
-    SYNTAX_ITEMS.append((stc.STC_ERLANG_NODE_NAME_QUOTED, 'default_style')) # TODO
-    SYNTAX_ITEMS.append((stc.STC_ERLANG_PREPROC, 'pre_style')) # TODO
-    SYNTAX_ITEMS.append((stc.STC_ERLANG_RECORD_QUOTED, 'default_style')) # TODO
+    SYNTAX_ITEMS.extend(
+        (
+            (stc.STC_ERLANG_ATOM_QUOTED, 'default_style'),
+            (stc.STC_ERLANG_BIFS, 'default_style'),
+            (stc.STC_ERLANG_COMMENT_DOC, 'dockey_style'),
+            (stc.STC_ERLANG_COMMENT_DOC_MACRO, 'dockey_style'),
+            (stc.STC_ERLANG_COMMENT_FUNCTION, 'comment_style'),
+            (stc.STC_ERLANG_COMMENT_MODULE, 'comment_style'),
+            (stc.STC_ERLANG_MACRO_QUOTED, 'default_style'),
+            (stc.STC_ERLANG_MODULES, 'default_style'),
+            (stc.STC_ERLANG_MODULES_ATT, 'default_style'),
+            (stc.STC_ERLANG_NODE_NAME_QUOTED, 'default_style'),
+            (stc.STC_ERLANG_PREPROC, 'pre_style'),
+            (stc.STC_ERLANG_RECORD_QUOTED, 'default_style'),
+        )
+    )
 else:
     SYNTAX_ITEMS.append((stc.STC_ERLANG_SEPARATOR, 'default_style')) # need style?
 

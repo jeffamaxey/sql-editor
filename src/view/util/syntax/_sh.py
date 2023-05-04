@@ -98,7 +98,6 @@ class SyntaxData(syndata.SyntaxDataBase):
 
     def GetKeywords(self):
         """Returns Specified Keywords List """
-        keywords = list()
         keyw_str = [COMM_KEYWORDS]
         if self.LangId == synglob.ID_LANG_CSH:
             keyw_str.append(CSH_KEYWORDS)
@@ -107,16 +106,10 @@ class SyntaxData(syndata.SyntaxDataBase):
                 keyw_str.append(EXT_KEYWORDS)
 
             if self.LangId == synglob.ID_LANG_BASH:
-                keyw_str.append(BSH_KEYWORDS)
-                keyw_str.append(BCMD_KEYWORDS)
+                keyw_str.extend((BSH_KEYWORDS, BCMD_KEYWORDS))
             elif self.LangId == synglob.ID_LANG_KSH:
-                keyw_str.append(KSH_KEYWORDS)
-                keyw_str.append(KCMD_KEYWORDS)
-            else:
-                pass
-
-        keywords.append((0, " ".join(keyw_str)))
-        return keywords
+                keyw_str.extend((KSH_KEYWORDS, KCMD_KEYWORDS))
+        return [(0, " ".join(keyw_str))]
 
     def GetSyntaxSpec(self):
         """Syntax Specifications """

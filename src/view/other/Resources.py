@@ -198,7 +198,7 @@ class ResourcePanel(wx.Panel):
         self.setting = Setting()
         self.setting.loadSettings()
 #         self.fileOperations = FileOperations()
-        self.connDict = dict()
+        self.connDict = {}
         vBox = wx.BoxSizer(wx.VERTICAL)
         ####################################################################
         self.resourceSearchLogic = ResourceSearchLogic()
@@ -242,9 +242,7 @@ class ResourcePanel(wx.Panel):
 
         # Catch the search type (name or content)
         searchMenu = self.filter.GetMenu().GetMenuItems()
-        fullSearch = searchMenu[1].IsChecked()
-
-        if fullSearch:
+        if fullSearch := searchMenu[1].IsChecked():
             self.OnSearch()
         else:
             self.RecreateTree()

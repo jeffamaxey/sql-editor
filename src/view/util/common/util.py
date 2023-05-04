@@ -23,7 +23,7 @@ def GetFileReader(file_name, enc='utf-8'):
 
     try:
         reader = codecs.getreader(enc)(file_h)
-    except (LookupError, IndexError, ValueError):
+    except (LookupError, ValueError):
 #         dev_tool.DEBUGP('[file_reader] Failed to get %s Reader' % enc)
         reader = file_h
     return reader
@@ -46,7 +46,7 @@ def GetFileWriter(file_name, enc='utf-8'):
         return -1
     try:
         writer = codecs.getwriter(enc)(file_h)
-    except (LookupError, IndexError, ValueError):
+    except (LookupError, ValueError):
 #         dev_tool.DEBUGP('[file_writer][err] Failed to get %s Writer' % enc)
         writer = file_h
     return writer

@@ -161,14 +161,11 @@ class Marker(object):
     @classmethod
     def AnySet(cls, stc, line):
         """Is any breakpoint set on the line"""
-        if not cls.IsSet(stc, line):
-            # Check subclasses
-            for bpoint in cls.__subclasses__():
-                if bpoint.IsSet(stc, line):
-                    return True
-            return False
-        else:
-            return True
+        return (
+            True
+            if cls.IsSet(stc, line)
+            else any(bpoint.IsSet(stc, line) for bpoint in cls.__subclasses__())
+        )
 
     @classmethod
     def GetIds(cls):

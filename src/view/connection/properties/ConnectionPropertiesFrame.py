@@ -89,11 +89,7 @@ class ConnPropertyFrame(wx.Frame):
         self.bindingEvent()
         self._mgr.Update()  
     def creatingBasicPanel(self):
-        # Create a TreeCtrl
-        basicPanel = BasicPanel(self)
-
-
-        return basicPanel
+        return BasicPanel(self)
     #---------------------------------------------    
 
          
@@ -114,32 +110,32 @@ class ConnPropertyFrame(wx.Frame):
         tb1.SetToolBitmapSize(wx.Size(16, 16))
         tb1.AddLabelTool(id=ID_newConnection, label="New Connection", shortHelp="New Database Connection", bitmap=wx.Bitmap(os.path.join(path, "connect.png")))
         tb1.AddSeparator()
-        
+
         tb1.AddLabelTool(id=ID_openConnection, label="Open Connection", shortHelp="Open Database Connection", bitmap=wx.Bitmap(os.path.join(path, "database_connect.png")))
         tb1.AddLabelTool(id=ID_newWorksheet, label="Script", shortHelp="Script", bitmap=wx.Bitmap(os.path.join(path, "script.png")))
         tb1.AddLabelTool(id=wx.ID_PREFERENCES, label="Preferences", shortHelp="Preferences", bitmap=wx.Bitmap(os.path.join(path, "preference.png")))
-        
-        
+
+
 #         self.combo = wx.ComboBox( tb1, 555, value = "Times", choices = ["Arial","Times","Courier"])  
 #         self.ch = wx.Choice(tb1, -1, (100, 50), choices = ['zero', 'one', 'two'])
 #         textCtrlAutoComplete=wx.TextCtrl(tb1)
         ###################################################################################################
-        args = {}
-        if True:
-            args["colNames"] = ("col1", "col2")
-            args["multiChoices"] = [ ("Zoey","WOW"), ("Alpha", "wxPython"),
-                                    ("Ceda","Is"), ("Beta", "fantastic"),
-                                    ("zoebob", "!!")]
-            args["colFetch"] = 1
-        else:
-            args["choices"] = ["123", "cs", "cds", "Bob","Marley","Alpha"]
-        args["selectCallback"] = self.selectCallback   
-        self.dynamic_choices = list()
+        args = {
+            "colNames": ("col1", "col2"),
+            "multiChoices": [
+                ("Zoey", "WOW"),
+                ("Alpha", "wxPython"),
+                ("Ceda", "Is"),
+                ("Beta", "fantastic"),
+                ("zoebob", "!!"),
+            ],
+            "colFetch": 1,
+            "selectCallback": self.selectCallback,
+        }
+        self.dynamic_choices = []
         sqlExecuter=SQLExecuter()
-        dbList = sqlExecuter.getListDatabase()  
-        for db in dbList:
-            self.dynamic_choices.append(db[1])
-           
+        dbList = sqlExecuter.getListDatabase()
+        self.dynamic_choices.extend(db[1] for db in dbList)
 #         self.dynamic_choices = [
 #                 'aardvark', 'abandon', 'acorn', 'acute', 'adore',
 #                 'aegis', 'ascertain', 'asteroid',
@@ -158,14 +154,14 @@ class ConnPropertyFrame(wx.Frame):
         self._ctrl.SetChoices(self.dynamic_choices)
         self._ctrl.SetEntryCallback(self.setDynamicChoices)
         self._ctrl.SetMatchFunction(self.match)
-        tb1.AddControl(self._ctrl) 
+        tb1.AddControl(self._ctrl)
         ###################################################################################################
 #         tb1.AddControl( self.choice ) 
 #         tb1.AddLabelTool(103, "Test", wx.ArtProvider_GetBitmap(wx.ART_INFORMATION))
 #         tb1.AddLabelTool(103, "Test"t1 = wx.TextCtrl(self, -1, "Test it out and see", size=(125, -1)), wx.ArtProvider_GetBitmap(wx.ART_WARNING))
 #         tb1.AddLabelTool(103, "Test", wx.ArtProvider_GetBitmap(wx.ART_MISSING_IMAGE))
         tb1.Realize()
-        
+
         return tb1
 
     def selectCallback(self, values):
@@ -264,22 +260,19 @@ class ConnPropertyFrame(wx.Frame):
         self._mgr.Update()        
 
     def constructHistoryPane(self):
-        historyGrid = HistoryGrid(self)
-        return historyGrid
+        return HistoryGrid(self)
     
 #     def constructSchemaViewerPane(self):
 #         svgViewer = SVGViewerPanel(self)
 #         return svgViewer
     
     def constructSqlPane(self):
-        worksheet = CreateWorksheetTabPanel(self)      
-          
-        return worksheet
+        return CreateWorksheetTabPanel(self)
     
     def getCurrentCursorPosition(self):
         lineNo=1
         column=1
-        return "Line "+str(lineNo)+" , Column "+str(column)
+        return f"Line {lineNo} , Column {column}"
         
     def createStatusBar(self):
         logger.debug('creating status bar')
@@ -451,9 +444,9 @@ python :{}""".format(plate, sys.version)
         
     def CreateSizeReportCtrl(self, width=80, height=80):
 
-        ctrl = SizeReportCtrl(self, -1, wx.DefaultPosition,
-                              wx.Size(width, height), self._mgr)
-        return ctrl
+        return SizeReportCtrl(
+            self, -1, wx.DefaultPosition, wx.Size(width, height), self._mgr
+        )
         
         
 class SizeReportCtrl(wx.PyControl):

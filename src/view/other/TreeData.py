@@ -319,19 +319,12 @@ class Node():
     def __init__(self, id, name, imageName=None, tooltip=None, child=None):
         self.id = id,
         self.name = name.title()
-        if tooltip:
-            self.tooltip = tooltip
-        else:
-            self.tooltip = name
-
+        self.tooltip = tooltip if tooltip else name
         self.imageName = imageName
         self.child = child
         
     def getFirstChildNode(self):
-        firstChild = None
-        if self.child:
-            firstChild = self.child[0]
-        return firstChild
+        return self.child[0] if self.child else None
 
     def __repr__(self):
         return f' name:{self.name},tooltip:{self.tooltip}, imageName:{self.imageName}  child:{self.child}'
@@ -347,54 +340,47 @@ class TreeSearch():
         treeData = []
         for data in dataList:
             print(data)
-            node = self.getNode(data, searchText=searchText)
-#             if searchText == None:
-            if node:
+            if node := self.getNode(data, searchText=searchText):
                 treeData.append(node)
 #             else:
 #                 for treeLabel in flatTreeLabelList :
 #                     if searchText and re.search(searchText, treeLabel, re.I):
 #                         treeData.append(node)
 #                         break
-                    
+
         return treeData
 
     def isSearchMatch(self, text, searchText):
         searchMatch = False
-        if searchText == None:
-            searchMatch = True
+        if searchText is None:
+            return True
         elif searchText and re.search(searchText, text, re.I):
-            searchMatch = True
+            return True
         else:
-            searchMatch = False
-        return searchMatch
+            return False
     
     def getNode(self, data, searchText=None):
         print(data)
         node = None
         flatTreeLabelList = []
         try:
-            if data :
+            if data:
                 flatTreeLabelList.append(data[1])
 #                 self.traverse.append(self.isSearchMatch(searchText, data[1]))
                 node = Node(data[0], data[1], imageName=data[2], tooltip=data[3] , child=None)
                 if data[4]:
                     node.child = []
                     for d in data[4]:
-                        child = self.getNode(d, searchText=searchText)
-                        
-#                         child=self.someMethod(flatTreeLabelList, child, searchText)
-                        if child:
+                        if child := self.getNode(d, searchText=searchText):
                             node.child.append(child)
         except Exception as e:
             print(data) 
             print(e)
-                
+
         return node
     
     def searchTreeData(self, searchText=None):
-        for treeDataItem in self.treeData:
-            pass
+        pass
 
 
 if __name__ == '__main__':

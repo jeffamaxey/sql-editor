@@ -101,10 +101,7 @@ class MyCellEditor(gridlib.PyGridCellEditor):
         """
         logger.debug("MyCellEditor: EndEdit (%s)\n" ,oldVal)
         val = self._tc.GetValue()
-        if val != oldVal:  # self.startValue:
-            return val
-        else:
-            return None
+        return val if val != oldVal else None
         
 
     def ApplyEdit(self, row, col, grid):
@@ -144,8 +141,11 @@ class MyCellEditor(gridlib.PyGridCellEditor):
         # return super(MyCellEditor, self).IsAcceptedKey(evt)
 
         # or do it ourselves
-        return (not (evt.ControlDown() or evt.AltDown()) and
-                evt.GetKeyCode() != wx.WXK_SHIFT)
+        return (
+            not evt.ControlDown()
+            and not evt.AltDown()
+            and evt.GetKeyCode() != wx.WXK_SHIFT
+        )
 
 
     def StartingKey(self, evt):
@@ -233,8 +233,7 @@ class HistoryGrid(gridlib.Grid):
 #         self.SetColSize(2, 150)
         sqlExecuter = SQLExecuter(database='_opal.sqlite')
         sqlText='select * from sql_log order by created_time desc;'
-        sqlOutput = sqlExecuter.executeText(sqlText)
-        if sqlOutput:
+        if sqlOutput := sqlExecuter.executeText(sqlText):
             self.addData(data=sqlOutput)
 
 

@@ -77,10 +77,7 @@ class FileObjectBaseImpl():
 		@return: bool
 
 		"""
-		if self._path:
-			return fileutil.PathExists(self._path)
-		else:
-			return False
+		return fileutil.PathExists(self._path) if self._path else False
 
 	def GetExtension(self):
 		"""Get the files extension if it has one else simply return the
@@ -100,10 +97,7 @@ class FileObjectBaseImpl():
 		@return: err traceback or None
 
 		"""
-		errstr = u"None"
-		if self.last_err:
-				errstr = self.last_err
-		return errstr
+		return self.last_err if self.last_err else u"None"
 
 	def GetModTime(self):
 		"""Get the timestamp of this files last modification"""
@@ -121,10 +115,7 @@ class FileObjectBaseImpl():
 		@return: int
 
 		"""
-		if self._path:
-			return fileutil.GetFileSize(self._path)
-		else:
-			return 0
+		return fileutil.GetFileSize(self._path) if self._path else 0
 
 	def IsOpen(self):
 		"""Check if file is open or not

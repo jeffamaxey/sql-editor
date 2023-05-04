@@ -94,24 +94,24 @@ class CreateTableHeadPanel(wx.Panel):
 
     def __init__(self, parent=None, *args, **kw):
         wx.Panel.__init__(self, parent, id=-1)
-        self.parent = parent     
+        self.parent = parent
         import  wx.lib.rcsizer  as rcs
         sizer = rcs.RowColSizer()
 #         vBox = wx.BoxSizer(wx.VERTICAL)
-        self.tableDict = dict()
+        self.tableDict = {}
 #         self.setData(self.tableDict)
-        
+
 #         schemaNameLabel = wx.StaticText(self, -1, "Schema Name:")
 #         self.schemaNameText = wx.TextCtrl(self, -1, '', size=(250, -1))
 #         self.schemaNameText.Bind(wx.EVT_TEXT, self.onSchemaName) 
-        
+
         tableNameLabel = wx.StaticText(self, -1, "Table Name:")
         self.tableNameText = wx.TextCtrl(self, -1, '', size=(250, -1))
         self.tableNameText.Bind(wx.EVT_TEXT, self.onTableName) 
-        
+
 #         sizer.Add(schemaNameLabel, flag=wx.EXPAND, row=1, col=1)
 #         sizer.Add(self.schemaNameText, row=1, col=2)
-        
+
         sizer.Add(tableNameLabel, flag=wx.EXPAND, row=0, col=1)
         sizer.Add(self.tableNameText, row=0, col=2)
 
@@ -303,11 +303,11 @@ class CreateTablePanel(wx.Panel):
 #         if self.GetTopLevelParent().getEditorPanel():
 #             self.GetTopLevelParent().getEditorPanel().sstc.SetText(self.createSql(tableDict))
         
-    def createSql(self, tableDict=None):    
+    def createSql(self, tableDict=None):
         '''
         This method creates sql script for create table sql.
         '''
-        sqlList = list()
+        sqlList = []
         if tableDict:
             sqlList.append("CREATE")
             if 'temp' in tableDict.keys():
@@ -320,14 +320,13 @@ class CreateTablePanel(wx.Panel):
                     sqlList.append("'" + tableDict['schemaName'] + "'.'" + tableDict['tableName'] + "'")
                 else:
                     sqlList.append("'" + tableDict['tableName'] + "'")
-                    
+
             else:
                 sqlList.append("'" + tableDict['tableName'] + "'")
             sqlList.append('(')
             logger.debug(tableDict['rows'])
-            for idx, column in enumerate(tableDict['rows']):
-                sqlList.append("'" + column['columnName'] + "'")
-                sqlList.append(column['dataType'])
+            for column in tableDict['rows']:
+                sqlList.extend(("'" + column['columnName'] + "'", column['dataType']))
                 if column['isPrimaryKey'] == '1':
                     sqlList.append('PRIMARY KEY')
                     if column['isAutoIncrement'] == '1':
@@ -336,17 +335,14 @@ class CreateTablePanel(wx.Panel):
                     sqlList.append('NOT NULL')
                 elif column['isUnique'] == '1':
                     sqlList.append('UNIQUE')
-                elif column['isUnique'] == '1':
-                    sqlList.append('UNIQUE')
                 elif 'check' in column.keys():
                     sqlList.append('CHECK ( ' + column['check'] + ' )')
                 elif 'default' in column.keys():
                     sqlList.append('DEFAULT ' + str(column['default']))
-                
+
                 sqlList.append(',')
             sqlList.pop()
-            sqlList.append(')')  
-            sqlList.append(';')  
+            sqlList.extend((')', ';'))
         sql = " ".join(sqlList)
         logger.debug('sql: %s', sql)
 #         formatedSql=sqlparse.format(sql, encoding=None)
@@ -386,9 +382,8 @@ class SimpleGrid(wx.grid.Grid):
         self.bindAllEvent()
 
     def addImages(self):
-        self.bmpList = list()
+        self.bmpList = [self.fileOperations.getImageBitmap(imageName="key.png")]
 
-        self.bmpList.append(self.fileOperations.getImageBitmap(imageName="key.png"))  # 0 for primary key
         self.bmpList.append(self.fileOperations.getImageBitmap(imageName="textfield.png"))  # 1 for varchar, char, text column
         self.bmpList.append(self.fileOperations.getImageBitmap(imageName="unique_constraint.png"))  # 2  for unique key column
         self.bmpList.append(self.fileOperations.getImageBitmap(imageName="datetime.png"))  # 3 for datetime field column
@@ -562,10 +557,7 @@ class SimpleGrid(wx.grid.Grid):
         evt.Skip()
  
     def OnRangeSelect(self, evt):
-        if evt.Selecting():
-            msg = 'Selected'
-        else:
-            msg = 'Deselected'
+        msg = 'Selected' if evt.Selecting() else 'Deselected'
         logger.debug(f"OnRangeSelect: {msg}  top-left {evt.GetTopLeftCoords()}, bottom-right { evt.GetBottomRightCoords()}")
         evt.Skip()
  
@@ -632,10 +624,7 @@ class SimpleGrid(wx.grid.Grid):
 #         print ''            #blank line to make it pretty.
 #         event.Skip()
     def OnSelectCell(self, evt):
-        if evt.Selecting():
-            msg = 'Selected'
-        else:
-            msg = 'Deselected'
+        msg = 'Selected' if evt.Selecting() else 'Deselected'
         logger.debug("OnSelectCell: %s (%d,%d) %s" , msg, evt.GetRow(),
                                                  evt.GetCol(), evt.GetPosition())
 #  
@@ -650,7 +639,7 @@ class SimpleGrid(wx.grid.Grid):
 #      
 #             if value == 'no good 2':
 #                 return  # cancels the cell selection
-     
+
 #         evt.Skip()
         if evt.Col in self.checkBoxColumns:
             wx.CallAfter(self.EnableCellEditControl)
@@ -818,24 +807,29 @@ class SimpleGrid(wx.grid.Grid):
                     # create new selection items on the fly.
                     tChoiceEditor = wx.grid.GridCellChoiceEditor([], allowOthers=True)
                     self.SetCellEditor(row , col, tChoiceEditor)
-                    
-                    selectedDataType = None
-                    for dataType in self.dataTypeList:
-                        if v.upper() == dataType[0]:
-                            selectedDataType = k
-                            break
+
+                    selectedDataType = next(
+                        (
+                            k
+                            for dataType in self.dataTypeList
+                            if v.upper() == dataType[0]
+                        ),
+                        None,
+                    )
                     self.SetCellValue(row, col, str(v))
                     self.SetColSize(col, 100)
-                elif k in self.comboBoxList:
-                    self.SetCellValue(row, col, str(v))      
+                elif (
+                    k in self.comboBoxList
+                    or k not in self.checkBoxColumns
+                    and k in self.textBoxColumns
+                ):
+                    self.SetCellValue(row, col, str(v))
                 elif k in self.checkBoxColumns:
                     attr = wx.grid.GridCellAttr()
                     attr.SetEditor(wx.grid.GridCellBoolEditor())
                     attr.SetRenderer(wx.grid.GridCellBoolRenderer())
                     self.SetColAttr(col, attr)  
-                    self.SetCellValue(row , col, str(v))    
-                elif k in self.textBoxColumns:
-                    self.SetCellValue(row, col, str(v))  
+                    self.SetCellValue(row , col, str(v))
                 elif col in self.iconColumns:
                     logger.debug("self.iconColumns: %s", self.iconColumns)
                     self.SetColLabelValue(col, 'Icon')
@@ -859,25 +853,28 @@ class SimpleGrid(wx.grid.Grid):
                     # create new selection items on the fly.
                     tChoiceEditor = wx.grid.GridCellChoiceEditor([], allowOthers=True)
                     self.SetCellEditor(dataKey - 1, idx, tChoiceEditor)
-                    
-                    selectedDataType = None
-                    for dataType in self.dataTypeList:
-                        if dataType[0] == colValue:
-                            selectedDataType = dataType
-                            break
+
+                    selectedDataType = next(
+                        (
+                            dataType
+                            for dataType in self.dataTypeList
+                            if dataType[0] == colValue
+                        ),
+                        None,
+                    )
                     self.SetCellValue(dataKey - 1, idx, selectedDataType[0])
                     self.SetColSize(idx, 100)
-                    
+
                 elif dataKey > 0 and idx in self.comboBoxList:
-                    self.SetCellValue(dataKey - 1, idx, str(colValue))      
+                    self.SetCellValue(dataKey - 1, idx, str(colValue))
                 elif dataKey > 0 and idx in self.checkBoxColumns:
                     attr = wx.grid.GridCellAttr()
                     attr.SetEditor(wx.grid.GridCellBoolEditor())
                     attr.SetRenderer(wx.grid.GridCellBoolRenderer())
                     self.SetColAttr(idx, attr)  
-                    self.SetCellValue(dataKey - 1, idx, str(colValue))    
+                    self.SetCellValue(dataKey - 1, idx, str(colValue))
                 elif dataKey > 0 and idx in self.textBoxColumns:
-                    self.SetCellValue(dataKey - 1, idx, str(colValue))  
+                    self.SetCellValue(dataKey - 1, idx, str(colValue))
                 elif dataKey > 0 and idx in self.iconColumns:
                     logger.debug("self.iconColumns: %s", self.iconColumns)
                     attr = wx.grid.GridCellAttr()
@@ -885,7 +882,7 @@ class SimpleGrid(wx.grid.Grid):
                     self.SetColAttr(idx, attr)  
                     self.SetCellValue(dataKey - 1, idx, str(colValue))
                     self.SetColSize(idx, 50)
-                
+
                 if idx == 0:
                     self.SetColSize(idx, 50)  
                 elif idx == 1:  
@@ -920,7 +917,7 @@ class GridCellIconRenderer(wx.grid.PyGridCellRenderer):
             selectedBmp = self.bmpList[int(self.selectBmpIndex)]
         except Exception as e:
             logger.error(e , exc_info=True) 
-        
+
         image = wx.MemoryDC()
         image.SelectObject(selectedBmp)
         # clear the background
@@ -931,16 +928,12 @@ class GridCellIconRenderer(wx.grid.PyGridCellRenderer):
         else:
             dc.SetBrush(wx.Brush(wx.WHITE, wx.SOLID))
             dc.SetPen(wx.Pen(wx.WHITE, 1, wx.SOLID))
-        dc.DrawRectangle(rect)        
+        dc.DrawRectangle(rect)
         # copy the image but only to the size of the grid cell
         width, height = selectedBmp.GetWidth(), selectedBmp.GetHeight()
 
-        if width > rect.width - 2:
-            width = rect.width - 2
-
-        if height > rect.height - 2:
-            height = rect.height - 2
-
+        width = min(width, rect.width - 2)
+        height = min(height, rect.height - 2)
         dc.Blit(rect.x + 1, rect.y + 1, width, height,
                 image,
                 0, 0, wx.COPY, True)
@@ -1067,13 +1060,13 @@ class CreateTableFrame(wx.Frame):
 
     def CreateSizeReportCtrl(self, width=80, height=80):
 
-        ctrl = SizeReportCtrl(self, -1, wx.DefaultPosition, wx.Size(width, height), self._mgr)
-        return ctrl
+        return SizeReportCtrl(
+            self, -1, wx.DefaultPosition, wx.Size(width, height), self._mgr
+        )
 
     def creatingTablePanel(self, width=80, height=80):
 
-        tablePanel = CreateTablePanel(self, 'connectionName', 'newTableName')
-        return tablePanel
+        return CreateTablePanel(self, 'connectionName', 'newTableName')
 
 #     def creatingSQLPanel(self, width=80, height=80):
 # 
@@ -1146,7 +1139,7 @@ if __name__ == '__main__':
     app = wx.App(False)
 #     frame = CreateTableFrame(None, 'table creation')
     frame = CreateTableFrame(None, size=(1000, 600))
-    tableDict = dict()
+    tableDict = {}
 #     frame.setData(tableDict)
     frame.Show()
     app.MainLoop()

@@ -147,11 +147,7 @@ def AutoIndenter(estc, pos, ichar):
         return
 
     indent = estc.GetLineIndentation(line)
-    if ichar == u"\t":
-        tabw = estc.GetTabWidth()
-    else:
-        tabw = estc.GetIndent()
-
+    tabw = estc.GetTabWidth() if ichar == u"\t" else estc.GetIndent()
     i_space = indent / tabw
     end_spaces = ((indent - (tabw * i_space)) * u" ")
 
@@ -196,7 +192,7 @@ class XTextLexer(RegexLexer):
     #: optional Comment or Whitespace
     #_ws = r'(?:\s|//.*?\n|/[*].*?[*]/)+'
 
-    def AltWords(words):
+    def AltWords(self):
         """Makes lexer rule for alternative words from the given words list.
         @param words: string consisting of space separated words
         @return: string in the form \\bword1\\b|\\bword2\\b|\\bword3\b...

@@ -48,7 +48,7 @@ class SyntaxData(syndata.SyntaxDataBase):
     def GetKeywords(self):
         """Returns Specified Keywords List """
         sgml = _html.KeywordString(synglob.ID_LANG_SGML)
-        return [(5, XML_KEYWORDS + u" " + sgml)]
+        return [(5, f"{XML_KEYWORDS} {sgml}")]
 
     def GetSyntaxSpec(self):
         """Syntax Specifications """

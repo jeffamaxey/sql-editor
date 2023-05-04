@@ -141,7 +141,7 @@ class EditraCommander(object):
         @param repeat: int
 
         """
-        for i in range(repeat):
+        for _ in range(repeat):
             self.stc.Undo()
 
     def Redo(self, repeat):
@@ -149,7 +149,7 @@ class EditraCommander(object):
         @param repeat: int
 
         """
-        for i in range(repeat):
+        for _ in range(repeat):
             self.stc.Redo()
 
     def _GetPos(self):
@@ -220,9 +220,9 @@ class EditraCommander(object):
         @keyword restore: bool
 
         """
-        line = self.ScrollStack[-1]
         self.ScrollStack[:-1]
         if restore:
+            line = self.ScrollStack[-1]
             self.stc.ScrollToLine(line)
 
     def _IsLine(self, text):
@@ -232,10 +232,7 @@ class EditraCommander(object):
         """
         eol = self.stc.GetEOLChar()
         eol_len = len(eol)
-        if len(text) > eol_len:
-            return text[-len(eol):] == eol
-        else:
-            return False
+        return text[-len(eol):] == eol if len(text) > eol_len else False
 
     def _GetCol(self):
         """Get the X position of the caret, aka column"""
@@ -332,7 +329,7 @@ class EditraCommander(object):
         @keyword repeat: int
 
         """
-        for i in range(repeat):
+        for _ in range(repeat):
             self.stc.LineUp()
 
     def MoveDown(self, repeat=1):
@@ -340,7 +337,7 @@ class EditraCommander(object):
         @keyword repeat: int
 
         """
-        for i in range(repeat):
+        for _ in range(repeat):
             self.stc.LineDown()
 
     def MoveRight(self, repeat=1):
@@ -367,61 +364,61 @@ class EditraCommander(object):
 
     def NextWord(self, repeat=1):
         """Move to beginning of next word"""
-        for i in range(repeat):
+        for _ in range(repeat):
             self.stc.WordRight()
 
     def NextWordBig(self, repeat=1):
         """Move to beginning of next Word (words are separated by space)"""
         # TODO:CJP Test on empty document, possible error condition
-        for i in range(repeat):
+        for _ in range(repeat):
             self.stc.WordRight()
             while self.GetChar(-1) and not self.GetChar(-1).isspace():
                 self.stc.WordRight()
 
     def WordEnd(self, repeat=1):
         """Move to end of this word"""
-        for i in range(repeat):
+        for _ in range(repeat):
             self.stc.WordRightEnd()
 
     def WordEndBig(self, repeat=1):
         """Move to end of this Word (words are separated by space)"""
         # TODO:CJP Test on empty document, possible error condition
-        for i in range(repeat):
+        for _ in range(repeat):
             self.stc.WordRightEnd()
             while self.GetChar() and not self.GetChar().isspace():
                 self.stc.WordRightEnd()
 
     def BackWord(self, repeat=1):
         """Move back to start of word"""
-        for i in range(repeat):
+        for _ in range(repeat):
             self.stc.WordLeft()
 
     def BackWordBig(self, repeat=1):
         """Move back to start of Word (words are separated by space)"""
         # TODO:CJP Test on empty document, possible error condition
-        for i in range(repeat):
+        for _ in range(repeat):
             self.stc.WordLeft()
             while self.GetChar(-1) and not self.GetChar(-1).isspace():
                 self.stc.WordLeft()
 
     def BackWordPart(self, repeat=1):
         """Move back to start of word part"""
-        for i in range(repeat):
+        for _ in range(repeat):
             self.stc.WordPartLeft()
 
     def WordPartEnd(self, repeat=1):
         """Move to the end of the word part"""
-        for i in range(repeat):
+        for _ in range(repeat):
             self.stc.WordPartRight()
 
     def ParaUp(self, repeat=1):
         """Move the caret one paragraph up"""
-        for i in range(repeat):
+        for _ in range(repeat):
             self.stc.ParaUp()
 
     def ParaDown(self, repeat=1):
         """Move the caret one paragraph down"""
-        for i in range(repeat):
+        for _ in range(repeat):
             self.stc.ParaDown()
 
     def RegexSearch(self, text, back=False):
@@ -460,10 +457,7 @@ class EditraCommander(object):
             # TODO:CJP to ensure caret is visible call EnsureCaretVisible
             return None
 
-        if current < first:
-            amt = 0.7
-        else:
-            amt = 0.3
+        amt = 0.7 if current < first else 0.3
         self._Scroll(amt)
 
     def _Scroll(self, amt):
@@ -521,7 +515,7 @@ class EditraCommander(object):
         if not ident:
             return
 
-        for i in range(repeat):
+        for _ in range(repeat):
             if back:
                 self._GotoSelectionStart()
             else:
@@ -579,7 +573,7 @@ class EditraCommander(object):
             return
 
         self.BeginUndoAction()
-        for i in range(repeat):
+        for _ in range(repeat):
             self.LastChangeCommand()
             self.InsertText(self.LastInsertedText)
         self.EndUndoAction()
@@ -670,14 +664,14 @@ class EditraCommander(object):
         elif not bIsLine:
             self.stc.CharRight()
 
-        for i in range(repeat):
+        for _ in range(repeat):
             self.InsertText(text)
         self.EndUndoAction()
 
     def InvertCase(self, repeat):
         """Invert the case of the following characters"""
         if not self.HasSelection():
-            for i in range(repeat):
+            for _ in range(repeat):
                 self.StartSelection()
                 self.MoveForward()
                 self.EndSelection()
@@ -697,11 +691,7 @@ class EditraCommander(object):
         @keyword back: If set to true, delete character before the caret
 
         """
-        if back:
-            move = self.MoveBack
-        else:
-            move = self.MoveForward
-
+        move = self.MoveBack if back else self.MoveForward
         self.BeginUndoAction()
         self.StartSelection()
         move(repeat)
@@ -721,7 +711,7 @@ class EditraCommander(object):
         """Replace the next character under cursor with the given char"""
         self.BeginUndoAction()
         self.DeleteForward(repeat)
-        for i in range(repeat):
+        for _ in range(repeat):
             self.InsertText(char)
         self.EndUndoAction()
 
@@ -762,9 +752,6 @@ class EditraCommander(object):
         if mark in string.ascii_lowercase:
              # Local bookmarks
             self._Bookmarks[mark] = (bm_handle, column)
-        elif mark in string.ascii_uppercase:
-            # Global bookmarks
-            pass
 
     def GotoMark(self, mark):
         """Goto the position of the bookmark associated with the given
@@ -773,7 +760,7 @@ class EditraCommander(object):
         @todo: hook into Bookmark Manager ed_bookmark?
 
         """
-        if not mark in self._Bookmarks:
+        if mark not in self._Bookmarks:
             return
 
         bm_handle, col = self._Bookmarks[mark]
@@ -831,11 +818,7 @@ class EditraCommander(object):
         self.PushScroll()
         self.PushCaret()
         self.BeginUndoAction()
-        if forward:
-            indent = self.stc.Tab
-        else:
-            indent = self.stc.BackTab
-
+        indent = self.stc.Tab if forward else self.stc.BackTab
         for line in range(*self._GetSelectedLines()):
             self.stc.GotoLine(line)
             indent()
@@ -1024,14 +1007,12 @@ def Arrows(editor, repeat, cmd):
           }
     if cmd in cmd_map:
         cmd_map[cmd](repeat)
-    else:
-        # Handle motion for actual arrow keys
-        if cmd == u'\u013c' and not editor.IsAtLineEnd():
-            # Right arrow
-            editor.MoveRight()
-        elif cmd == u'\u013a' and not editor.IsAtLineStart():
-            # Left Arrow
-            editor.MoveLeft()
+    elif cmd == u'\u013c' and not editor.IsAtLineEnd():
+        # Right arrow
+        editor.MoveRight()
+    elif cmd == u'\u013a' and not editor.IsAtLineStart():
+        # Left Arrow
+        editor.MoveLeft()
 
 @vim_parser('wbeWBE[]', is_motion=True)
 def Words(editor,repeat, cmd):
@@ -1152,14 +1133,12 @@ def Change(editor, repeat, cmd):
         editor.PopCaret(restore)
         editor.PopColumn(restore)
         return return_value
+
     pre_selected = False
     line_motion = False
     if editor.HasSelection():
         pre_selected = True
-        if len(cmd) > 1:
-            motion = cmd[1:]
-        else:
-            motion = ''
+        motion = cmd[1:] if len(cmd) > 1 else ''
         cmd = cmd[0]
     else:
         if len(cmd) == 1:
@@ -1214,9 +1193,7 @@ def Change(editor, repeat, cmd):
 
     # XXX: Some special case handling
     #      Not the most elegant way though ..
-    if cmd == u'c':
-        pass
-    else:
+    if cmd != u'c':
         # Repeating delete/yank/indent commands doesn't insert any text
         editor.SetLastInsertedText(u'')
         # Applying them in visual mode ends visual mode

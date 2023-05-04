@@ -152,7 +152,7 @@ class NONMEMLexer(RegexLexer):
     #: optional Comment or Whitespace
     #_ws = r'(?:\s|//.*?\n|/[*].*?[*]/)+'
 
-    def AltWords(words):
+    def AltWords(self):
         """Makes lexer rule for alternative words from the given words list.
         @param words: string consisting of space separated words
         @return: string in the form \\bword1\\b|\\bword2\\b|\\bword3\\b...

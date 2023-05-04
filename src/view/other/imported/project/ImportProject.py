@@ -143,9 +143,9 @@ class CreateButtonPanel(wx.Panel):
     def __init__(self, parent=None, *args, **kw):
 
         wx.Panel.__init__(self, parent, id=-1)
-        
+
         # stack for next and previous
-        self.stack = list()
+        self.stack = []
 #         self.parent = parent
         self.fileOperations = FileOperations()
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -202,8 +202,7 @@ class CreateButtonPanel(wx.Panel):
                 node = panel.selection
             panel.Hide()
         if node:
-            pan = self.isPanelPresent(node.name)
-            if pan:
+            if pan := self.isPanelPresent(node.name):
                 pan.Show()
             else:
                 panelObj = self.GetParent().bodyPanel.addPanel(name=node.name)

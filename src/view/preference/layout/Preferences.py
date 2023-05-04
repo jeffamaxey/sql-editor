@@ -80,21 +80,19 @@ class Preference(wx.Frame):
         self._mgr.Update()
 
     def createPreferenceTree(self):
-        prefrencesTreePanel = PrefrencesTreePanel(self)
-        return prefrencesTreePanel
+        return PrefrencesTreePanel(self)
 
     def CreateSizeReportCtrl(self, width=80, height=80):
 
-        ctrl = SizeReportCtrl(self, -1, wx.DefaultPosition, wx.Size(width, height), self._mgr)
-        return ctrl
+        return SizeReportCtrl(
+            self, -1, wx.DefaultPosition, wx.Size(width, height), self._mgr
+        )
     
     def rightPanel(self):
-        ctrl = RightPanel(self, -1, wx.DefaultPosition)
-        return ctrl
+        return RightPanel(self, -1, wx.DefaultPosition)
     
     def bottomPanel(self):
-        applyResetButtonPanel = ApplyCloseButtonPanel(self)
-        return applyResetButtonPanel
+        return ApplyCloseButtonPanel(self)
 
 
 from src.view.preference.general.GeneralPanel import GeneralPreferencePanel
@@ -121,8 +119,7 @@ class RightPanel(wx.Panel):
         self.SetSizer(self.vBox)
 
     def addPanel(self, name=None):
-        rightPanelItem = self.getPreferencePanelObj(name=name)
-        if rightPanelItem:
+        if rightPanelItem := self.getPreferencePanelObj(name=name):
             self.vBox.Add(rightPanelItem, 1, wx.EXPAND)
 
 #             self.GetChildren().append(rightPanelItem)

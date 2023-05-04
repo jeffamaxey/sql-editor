@@ -211,7 +211,7 @@ class SyntaxData(syndata.SyntaxDataBase):
     def GetKeywords(self):
         """Returns Specified Keywords List"""
         if self.LangId == synglob.ID_LANG_COLDFUSION:
-            return [(HTML_TAGS[0], HTML_TAGS[1] + " " + CF_TAGS), JS_KEYWORDS]
+            return [(HTML_TAGS[0], f"{HTML_TAGS[1]} {CF_TAGS}"), JS_KEYWORDS]
         else:
             return [HTML_TAGS, JS_KEYWORDS, SGML_KEYWORDS, VBS_KEYWORDS]
 
@@ -241,10 +241,7 @@ def AutoIndenter(estc, pos, ichar):
     spos = estc.PositionFromLine(line)
     text = estc.GetTextRange(spos, pos)
     eolch = estc.GetEOLChar()
-    inspace = text.isspace()
-
-    # Cursor is in the indent area somewhere
-    if inspace:
+    if inspace := text.isspace():
         estc.AddText(eolch + text)
         return
 
@@ -253,11 +250,7 @@ def AutoIndenter(estc, pos, ichar):
         estc.AddText(eolch)
         return
 
-    if ichar == u"\t":
-        tabw = estc.GetTabWidth()
-    else:
-        tabw = estc.GetIndent()
-
+    tabw = estc.GetTabWidth() if ichar == u"\t" else estc.GetIndent()
     # Standard indent to match previous line
     indent = estc.GetLineIndentation(line)
     levels = indent / tabw
@@ -289,9 +282,6 @@ def KeywordString(option=0):
     @param option: specific subset of keywords to get
 
     """
-    if option == synglob.ID_LANG_SGML:
-        return SGML_KEYWORDS[1]
-    else:
-        return HTML_TAGS[1]
+    return SGML_KEYWORDS[1] if option == synglob.ID_LANG_SGML else HTML_TAGS[1]
 
 #---- End Syntax Modules Internal Functions ----#

@@ -77,7 +77,7 @@ class CreatingTableInfoPanel(wx.Panel):
         self.tableName = None
         self.parent = parent
         self.dataSourceTreeNode = None
-        if kw and 'tableName' in kw.keys():
+        if kw and 'tableName' in kw:
             self.tableName = kw['tableName']
             self.dataSourceTreeNode = kw['dataSourceTreeNode']
         vBox = wx.BoxSizer(wx.VERTICAL)
@@ -139,8 +139,8 @@ class CreatingTableInfoToolbarPanel(wx.Panel):
         self.fileOperations = FileOperations()
         self.tabName = kw['tabName']
         self.dataSourceTreeNode = kw['dataSourceTreeNode']
-        self.data = list()
-        self.sqlList = dict()
+        self.data = []
+        self.sqlList = {}
         vBox = wx.BoxSizer(wx.VERTICAL)
         logger.debug(kw)
         ####################################################################
@@ -155,7 +155,7 @@ class CreatingTableInfoToolbarPanel(wx.Panel):
 #         self.bottomResultToolbar = self.constructBottomResultToolBar()
 #         self.resultPanel = ResultDataGrid(self, data=self.getData())
 #         bottomResultToolbar = self.constructBottomResultToolBar()
-        
+
         ####################################################################
         vBox.Add(self.toolbar , 0, wx.EXPAND | wx.ALL, 0)
 #         vBox.Add(self.resultPanel , 1, wx.EXPAND | wx.ALL, 0)
@@ -208,7 +208,7 @@ class CreatingTableInfoToolbarPanel(wx.Panel):
 
     def onSave(self, event):
         logger.debug('onSave')
-        
+
         # finding rows to be updated
         originalData = self.resultPanel.getData()
         for row in range(self.resultPanel.GetNumberRows()):
@@ -219,7 +219,7 @@ class CreatingTableInfoToolbarPanel(wx.Panel):
                 if row + 1 in originalData:
                     rowPresent = True
                     originalValue = originalData[row + 1][col]
-                    if '-______-NULL' == originalValue:
+                    if originalValue == '-______-NULL':
                         originalValue = originalValue.replace('-______-', '')
                     if str(originalValue) != newVal:
                         rowMatch = False
@@ -246,7 +246,7 @@ class CreatingTableInfoToolbarPanel(wx.Panel):
         for row, sqlListRow in self.sqlList.items():
             sql = self.getSql(sqlListRow).get('sql')
             db.executeText(sql)
-        self.sqlList = dict()
+        self.sqlList = {}
 # #         sqlText = self.generateSql()
 #         db = ManageSqliteDatabase(connectionName=self.dataSourceTreeNode.dataSource.connectionName, databaseAbsolutePath=self.dataSourceTreeNode.dataSource.filePath)
 # #         db.executeText(sqlText)
@@ -274,12 +274,11 @@ class CreatingTableInfoToolbarPanel(wx.Panel):
 
     def onRefresh(self, event):
         logger.debug('onRefresh')
-        self.sqlList = dict()
+        self.sqlList = {}
         db = ManageSqliteDatabase(connectionName=self.dataSourceTreeNode.dataSource.connectionName, databaseAbsolutePath=self.dataSourceTreeNode.dataSource.filePath)
 #         result = db.sqlite_select(tableName="sqlite_master")
         data = None
-        tableName = self.GetParent().GetParent().tableName
-        if tableName:
+        if tableName := self.GetParent().GetParent().tableName:
             data = db.executeText(text=f"SELECT * FROM '{tableName}' LIMIT 500;")
         if data:
             logger.debug('setResultData count: %s', len(data.keys()))
@@ -362,25 +361,22 @@ class CreatingTableInfoToolbarPanel(wx.Panel):
         columnClauseForUpdate = []
         for idx, column in enumerate(self.dataSourceTreeNode.sqlType.columns):
             dataStr = newData[idx]
-            if '-______-NULL' == dataStr:
+            if dataStr == '-______-NULL':
                 dataStr = dataStr.replace('-______-', '')
             if column.primaryKey != 1:
                 columnClauseForUpdate.append(f" `{column.name}` = {dataStr}")
-        columnClauseForUpdateStr = ",".join(columnClauseForUpdate)     
-        
-        return columnClauseForUpdateStr
+        return ",".join(columnClauseForUpdate)
 
     def getWhereClause(self, data):
         whereClasue = []
         for idx, column in enumerate(self.dataSourceTreeNode.sqlType.columns):
             dataStr = data[idx]
-            if '-______-NULL' == dataStr:
+            if dataStr == '-______-NULL':
                 dataStr = dataStr.replace('-______-', '')
                 whereClasue.append(f" `{column.name}` is {dataStr}")
             else:
                 whereClasue.append(f" `{column.name}`={dataStr}")
-        whereClasueStr = " AND".join(whereClasue)
-        return whereClasueStr
+        return " AND".join(whereClasue)
 
     def generateSql(self, oldDataSet=None, newDataSet=None):
         logger.debug('generateSql')
@@ -393,15 +389,16 @@ class CreatingTableInfoToolbarPanel(wx.Panel):
         columnsName = [column.name for column in self.dataSourceTreeNode.sqlType.columns]
         columns = "','".join(columnsName)
         updateSqlDataSet = set()
-        valuesList = list()
+        valuesList = []
         for insertSqlDataRow in insertSqlData:
             if insertSqlDataRow[0] in updatePKSet:
                 updateSqlDataSet.add(insertSqlDataRow)
             else:
                 valuesList.append("','".join(insertSqlDataRow))
-        sqlList = list()
-        for values in valuesList: 
-            sqlList.append(f'''INSERT INTO '{self.dataSourceTreeNode.nodeLabel}' ('{columns}') VALUES ('{values}');''')
+        sqlList = [
+            f'''INSERT INTO '{self.dataSourceTreeNode.nodeLabel}' ('{columns}') VALUES ('{values}');'''
+            for values in valuesList
+        ]
         return '\n'.join(sqlList)
 
     def getPrimaryKeyValue(self, oldDataSet):
@@ -431,7 +428,7 @@ class CreatingTableInfoToolbarPanel(wx.Panel):
                     sqlData = row[4]
         except Exception as e:
             logger.error(e, exc_info=True)
-            
+
         if tabName == 'Columns':
             resultPanel = ResultDataGrid(self, data=None)
             if tableName:
@@ -441,7 +438,7 @@ class CreatingTableInfoToolbarPanel(wx.Panel):
                 resultPanel.addData(rows)
         elif tabName == 'Indexes':
             resultPanel = ResultDataGrid(self, data=None)
-            
+
             resultPanel.addData(indexData)
         elif tabName == 'Data':
             toolbar = self.constructTopResultToolBar(tabName=tabName)
@@ -460,19 +457,16 @@ class CreatingTableInfoToolbarPanel(wx.Panel):
         elif tabName == 'Triggers':
             resultPanel = ResultDataGrid(self, data=None)
             resultPanel.addData(triggersData)
-        elif tabName == 'Triggers':
-            resultPanel = ResultDataGrid(self, data=None)
-            resultPanel.addData(triggersData)
         elif tabName == 'SQL':
             resultPanel = SqlConsoleOutputPanel(self, data=None)
             try:
                 resultPanel.text.SetText(sqlData)
             except Exception as e:
                 logger.error(e, exc_info=True)
-                
+
         elif tabName == 'ER diagram':
             resultPanel = wx.Panel()
-        
+
         return resultPanel, toolbar
 
     def findingConnectionName(self):

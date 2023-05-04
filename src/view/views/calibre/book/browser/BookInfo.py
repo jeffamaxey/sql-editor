@@ -92,8 +92,6 @@ class PropertyPhotoPanel(wx.Panel):
             dc = wx.BufferedPaintDC(self)
             dc.Clear()
             dc.DrawBitmap(self.bitmap, 0, 0)
-        else:
-            pass
         
     def getImageFilePath(self):
         imgFilePath = os.path.join(self.currentBook.bookPath, self.currentBook.bookImgName)
@@ -102,8 +100,7 @@ class PropertyPhotoPanel(wx.Panel):
             pattern = re.compile(r"\-(\d*)\.jpg$")
             for file in os.listdir(directory):
                 print(file)
-                m = pattern.search(file)
-                if m:
+                if m := pattern.search(file):
 #                     print(m.groups())
                     imgFilePath = m.group()
                     bookImgName = self.currentBook.bookImgName.replace('.jpg', m.group())
@@ -200,8 +197,7 @@ class BookPropertyPanel(wx.Panel):
             pattern = re.compile(r"\-(\d*)\.jpg$")
             for file in os.listdir(directory):
                 print(file)
-                m = pattern.search(file)
-                if m:
+                if m := pattern.search(file):
 #                     print(m.groups())
                     imgFilePath = m.group()
                     bookImgName = self.currentBook.bookImgName.replace('.jpg', m.group())
@@ -214,8 +210,7 @@ class BookPropertyPanel(wx.Panel):
         image = bitmap.ConvertToImage()
         if width and height:
             image = image.Scale(width, height, wx.IMAGE_QUALITY_HIGH)
-        result = wx.Bitmap(image)
-        return result
+        return wx.Bitmap(image)
 
 
 class BookPropertyFrame(wx.Frame):

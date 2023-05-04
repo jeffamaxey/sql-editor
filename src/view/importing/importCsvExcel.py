@@ -52,7 +52,7 @@ class ImportingCsvExcelFrame(wx.Frame):
         self.statusbar = self.CreateStatusBar(2, wx.STB_SIZEGRIP)
         self.statusbar.SetStatusWidths([-2, -3])
 #         self.statusbar.SetStatusText(self.getCurrentCursorPosition(), 0)
-        self.statusbar.SetStatusText("Welcome {}".format(TITLE), 1)
+        self.statusbar.SetStatusText(f"Welcome {TITLE}", 1)
 
         
 class CreateImportingCsvPanel(wx.Panel):
@@ -61,26 +61,25 @@ class CreateImportingCsvPanel(wx.Panel):
         wx.Panel.__init__(self, parent, -1, style=wx.WANTS_CHARS | wx.SUNKEN_BORDER)
         self.parent = parent
         vBox = wx.BoxSizer(wx.VERTICAL)  
-        
+
         ####################################################################
-        
-        self.tableDict = dict()
-        self.tableDict['tableName'] = ''        
+
+        self.tableDict = {'tableName': ''}
         vBox1 = wx.BoxSizer(wx.VERTICAL)
         import  wx.lib.rcsizer  as rcs
         sizer = rcs.RowColSizer()
-        
+
         fbbLabel = wx.StaticText(self, -1, "Select CSV / Excel File")
-        
+
         os.chdir(wx.GetHomeDir())
         self.fbb = filebrowse.FileBrowseButton(
             self, -1, size=(450, -1), labelText="", fileMask='CSV (*.csv)|*.csv|Excel (*.xls)|*.xls*|All Files|*.*', changeCallback=self.fbbCallback
             )
-        
+
         tableNameLabel = wx.StaticText(self, -1, "Table Name")
         self.tableNameText = wx.TextCtrl(self, -1, self.tableDict['tableName'], style=wx.TE_PROCESS_ENTER, size=(250, -1))
         self.Bind(wx.EVT_TEXT, self.onChangeTableName, self.tableNameText)
-        
+
         columnNameFirstRowLabel = wx.StaticText(self, -1, "Column Name in first row")
         self.columNameFirstRow = wx.CheckBox(self, -1, "", style=wx.ALIGN_RIGHT)
         self.Bind(wx.EVT_CHECKBOX, self.evtColumNameFirstRowCheckBox, self.columNameFirstRow)
@@ -120,7 +119,7 @@ class CreateImportingCsvPanel(wx.Panel):
         sizer.Add(trimFieldsLabel, flag=wx.EXPAND, row=7, col=1)
         sizer.Add(self.trimFieldCheck, row=7, col=2)
 #         sizer.Add(self.tableNameText, row=1, col=2)
-        
+
         vBox1.Add(sizer)
         vBox.Add(vBox1, 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
 #         vBox.Add(self.tb, 0, wx.EXPAND)

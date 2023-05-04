@@ -122,11 +122,7 @@ def AutoIndenter(estc, pos, ichar):
         return
 
     indent = estc.GetLineIndentation(line)
-    if ichar == u"\t":
-        tabw = estc.GetTabWidth()
-    else:
-        tabw = estc.GetIndent()
-
+    tabw = estc.GetTabWidth() if ichar == u"\t" else estc.GetIndent()
     i_space = indent / tabw
     end_spaces = ((indent - (tabw * i_space)) * u" ")
 

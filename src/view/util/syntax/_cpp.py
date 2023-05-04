@@ -145,7 +145,6 @@ class SyntaxData(syndata.SyntaxDataBase):
 
     def GetKeywords(self):
         """Returns Specified Keywords List"""
-        keywords = list()
         kw1_str = [C_KEYWORDS]
         kw2_str = [C_TYPES]
         if self.LangId == synglob.ID_LANG_CPP:
@@ -163,13 +162,7 @@ class SyntaxData(syndata.SyntaxDataBase):
         elif self.LangId == synglob.ID_LANG_CILK:
             kw1_str.append(CILK_KEYWORDS)
             kw2_str.append(CILK_TYPES)
-        else:
-            pass
-
-        keywords.append((0, " ".join(kw1_str)))
-        keywords.append((1, " ".join(kw2_str)))
-        keywords.append(DOC_KEYWORDS)
-        return keywords
+        return [(0, " ".join(kw1_str)), (1, " ".join(kw2_str)), DOC_KEYWORDS]
 
     def GetSyntaxSpec(self):
         """Syntax Specifications """
@@ -207,11 +200,7 @@ def AutoIndenter(estc, pos, ichar):
     eolch = estc.GetEOLChar()
 
     indent = estc.GetLineIndentation(line)
-    if ichar == u"\t":
-        tabw = estc.GetTabWidth()
-    else:
-        tabw = estc.GetIndent()
-
+    tabw = estc.GetTabWidth() if ichar == u"\t" else estc.GetIndent()
     i_space = indent / tabw
     ndent = eolch + ichar * i_space
     rtxt = ndent + ((indent - (tabw * i_space)) * u' ')

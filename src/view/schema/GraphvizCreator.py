@@ -89,8 +89,7 @@ if __name__ == '__main__':
                                                     #         ('B:f0', 'C:f0')
                                                         ]
     )
-    
-    
+
+
     g6 = gd.apply_styles(g6)
     g6.render('img/g6')
-    pass

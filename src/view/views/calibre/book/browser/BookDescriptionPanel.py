@@ -161,8 +161,7 @@ class RichTextPanel(wx.Panel):
                             wildcard=wildcard,
                             )
         if dlg.ShowModal() == wx.ID_OK:
-            path = dlg.GetPath()
-            if path:
+            if path := dlg.GetPath():
                 fileType = types[dlg.GetFilterIndex()]
                 self.rtc.LoadFile(path, fileType)
         dlg.Destroy()
@@ -180,12 +179,11 @@ class RichTextPanel(wx.Panel):
                             wildcard=wildcard,
                            )
         if dlg.ShowModal() == wx.ID_OK:
-            path = dlg.GetPath()
-            if path:
+            if path := dlg.GetPath():
                 fileType = types[dlg.GetFilterIndex()]
                 ext = rt.RichTextBuffer.FindHandlerByType(fileType).GetExtension()
                 if not path.endswith(ext):
-                    path += '.' + ext
+                    path += f'.{ext}'
                 self.rtc.SaveFile(path, fileType)
         dlg.Destroy()
                 
@@ -346,8 +344,7 @@ class RichTextPanel(wx.Panel):
         dlg = wx.FontDialog(self, fontData)
         if dlg.ShowModal() == wx.ID_OK:
             fontData = dlg.GetFontData()
-            font = fontData.GetChosenFont()
-            if font:
+            if font := fontData.GetChosenFont():
                 attr.SetFlags(wx.TEXT_ATTR_FONT)
                 attr.SetFont(font)
                 self.rtc.SetStyle(r, attr)
@@ -363,8 +360,7 @@ class RichTextPanel(wx.Panel):
         dlg = wx.ColourDialog(self, colourData)
         if dlg.ShowModal() == wx.ID_OK:
             colourData = dlg.GetColourData()
-            colour = colourData.GetColour()
-            if colour:
+            if colour := colourData.GetColour():
                 if not self.rtc.HasSelection():
                     self.rtc.BeginTextColour(colour)
                 else:

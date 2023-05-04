@@ -271,7 +271,7 @@ class FolderExplorerTreePanel(FileTree):
         files = [ self.GetPyData(node) for node in nodes ]
 #         files = self.GetSelectedFiles()
         logger.debug(files)
-        if files and len(files) > 0:
+        if files:
             self.showFileSelected(selectedFilePath=files[0])
 #         logger.debug(keypress == 'WXK_F2')
 #
@@ -330,8 +330,7 @@ class FolderExplorerTreePanel(FileTree):
         if project.projectPath not in self._watch:
 
             self._watch.append(project.projectPath)
-            childNode = self.AppendFileNode(self.RootItem, project=project)
-            return childNode
+            return self.AppendFileNode(self.RootItem, project=project)
 
     def AppendFileNode(self, item, project=None):
         """Append a child node to the tree
@@ -394,12 +393,7 @@ class FolderExplorerTreePanel(FileTree):
         @return: string or None
 
         """
-        tip = None
-#         if self.GetItemImage(item) == self.iconManager.IMG_NO_ACCESS:
-#             tip = _("Access Denied")
-#        elif item: # Slightly annoying on GTK disable for now
-#            tip = self.GetPyData(item)
-        return tip
+        return None
 
     def DoItemActivated(self, item):
         """Override to handle item activation
@@ -427,11 +421,13 @@ class FolderExplorerTreePanel(FileTree):
 
         """
 
-        shouldDisplay = True
         dname = os.path.split(path)[-1]
-        if os.path.isfile(path) or dname.startswith('.') or dname in ['__pycache__' , 'build', 'dist'] or '.egg-info' in dname :
-            shouldDisplay = False
-        return shouldDisplay
+        return (
+            not os.path.isfile(path)
+            and not dname.startswith('.')
+            and dname not in ['__pycache__', 'build', 'dist']
+            and '.egg-info' not in dname
+        )
 
 #     def ShouldDisplayFile(self, path):
 #         """Check if the given file should be displayed based on configuration
@@ -511,7 +507,7 @@ class FolderExplorerTreePanel(FileTree):
         """Get the list of files contained in the given directory"""
         logger.debug('GetDirContents')
         assert os.path.isdir(directory)
-        files = list()
+        files = []
         try:
 #             joinPath = os.path.join
 #             fappend = files.append
@@ -537,26 +533,12 @@ class FolderExplorerTreePanel(FileTree):
             logger.debug("[FileBrowser][err] FileBrowser.DoItemExpanding")
 #             util.Log("[FileBrowser][err] FileBrowser.DoItemExpanding")
             return False
-        if d and not os.access(d, os.W_OK) or os.path.ismount(d):
-            return False
-        return True
+        return bool((not d or os.access(d, os.W_OK)) and not os.path.ismount(d))
 
     def DoEndEdit(self, item, newlabel):
         """Handle after a user has made changes to a label"""
-        editOk = False
         path = self.GetPyData(item)
-        # TODO: check access rights and validate input
-#         if path:
-#             newpath = os.path.join(os.path.dirname(path), newlabel)
-#             try:
-#                 dobjs = TakeSnapshots([path,])
-#                 os.rename(path, newpath)
-#                 editOk = True
-#                 if dobjs:
-#                     self.RefreshView(dobjs)
-#             except OSError:
-#                 editOk = False # TODO: notify user of error
-        return editOk
+        return False
 
 #     def DoShowMenu(self, item):
 #         """Show context menu"""
@@ -642,7 +624,7 @@ class FolderExplorerTreePanel(FileTree):
         @param files: list of file names
 
         """
-        to_open = list()
+        to_open = []
         for fileWithImage in filesWithImage:
             fname = fileWithImage[0]
             try:
@@ -651,11 +633,8 @@ class FolderExplorerTreePanel(FileTree):
                 if stat.S_ISREG(res):
                     to_open.append(fileWithImage)
 
-                elif  stat.S_ISDIR(res):
-                    # TODO: need to think on it.
-                    pass
             except (IOError, OSError) as msg:
-                logger.debug("[filebrowser][err] %s" % str(msg))
+                logger.debug(f"[filebrowser][err] {str(msg)}")
 
         # TODO : Need to work on it.
         if hasattr(self.GetTopLevelParent(), '_mgr'):
@@ -696,23 +675,17 @@ class FolderExplorerTreePanel(FileTree):
             title = path = self.GetTabLabel()
 
         if window.GetModify() and not title.startswith(u'*'):
-            title = u"*" + title
+            title = f"*{title}"
         return title, path
 
     def OnCompareItems(self, item1, item2):
         """Handle SortItems"""
         data = self.GetPyData(item1)
-        if data is not None:
-            path1 = int(not os.path.isdir(data))
-        else:
-            path1 = 0
+        path1 = int(not os.path.isdir(data)) if data is not None else 0
         tup1 = (path1, data.lower())
 
         data2 = self.GetPyData(item2)
-        if data2 is not None:
-            path2 = int(not os.path.isdir(data2))
-        else:
-            path2 = 0
+        path2 = int(not os.path.isdir(data2)) if data2 is not None else 0
         tup2 = (path2, data2.lower())
 
         if tup1 < tup2:
@@ -731,7 +704,7 @@ class FolderExplorerTreePanel(FileTree):
 
         """
         nodes = self.GetExpandedNodes()
-        visible = list()
+        visible = []
         for node in nodes:
             visible.extend(self.GetChildNodes(node))
 
@@ -745,8 +718,8 @@ class FolderExplorerTreePanel(FileTree):
                     break
 
         # Add any new file objects to the view
-        pathCache = dict()
-        needsort = list()
+        pathCache = {}
+        needsort = []
         for fobj in added:
             # apply filters to any new files
 #             if not self.ShouldDisplayFile(fobj.Path):
@@ -901,8 +874,7 @@ class FolderExplorerTreePanel(FileTree):
             # message was sent.
             return
 
-        page = nbdata[0].GetPage(nbdata[1])
-        if page:
+        if page := nbdata[0].GetPage(nbdata[1]):
             path = getattr(page, 'GetFileName', lambda: u"")()
             if len(path) and os.path.exists(path):
                 # Delay selection for smoother operation when many
@@ -950,7 +922,6 @@ class FileBrowserMimeManager():
             '.yml':'yaml.png',
             '.spec':'spec.png',
             }
-        pass
 
     def PopulateImageList(self, imglist):
         """Populate an ImageList with the icons for the file tree
@@ -965,8 +936,7 @@ class FileBrowserMimeManager():
                               '.rar', '.msi', '.avi', '.mp4', '.mov', '.flv', '.mpg', '.gif', '.spec',
                               '.wma', '.mp3', '.wav', '.aac', '.m4a', '.dmg', '.tar', '.gz', ]:
             try:
-                icon = self.getIconByExtension(extensionName)
-                if icon:
+                if icon := self.getIconByExtension(extensionName):
                     imglist.Add(icon)
                     self.iconsDictIndex[extensionName] = count
                     self.fileImageExtensionDict[extensionName] = extensionName
@@ -998,8 +968,8 @@ class FileBrowserMimeManager():
                 icon, file, idx = fileType.GetIconInfo()
                 if icon.IsOk():
                     icon = icon
-            except :
-                logger.error('some error :' + extension)
+            except:
+                logger.error(f'some error :{extension}')
 #        This is to supress warning
         del noLog
         return icon
@@ -1021,10 +991,7 @@ class FileBrowserMimeManager():
                 elif isinstance(dtype, CDROMDrive):
                     imageName = 'cdrom.png'
         elif os.path.isdir(path):
-            if expanded:
-                imageName = 'folder_view.png'
-            else:
-                imageName = 'folder.png'
+            imageName = 'folder_view.png' if expanded else 'folder.png'
         elif os.path.isfile(path):
             filename, fileExtension = os.path.splitext(path)
             fileExtension = fileExtension.lower()
@@ -1034,15 +1001,13 @@ class FileBrowserMimeManager():
         return self.iconsDictIndex[imageName]
 
     def getFileImageNameByExtension(self, fileExtension=None):
-        if fileExtension:
-            if '.' not in fileExtension:
-                fileExtension = '.' + fileExtension
-        imageName = None
-
-        if fileExtension in self.fileImageExtensionDict.keys():
-            imageName = self.fileImageExtensionDict[fileExtension]
-
-        return imageName
+        if fileExtension and '.' not in fileExtension:
+            fileExtension = f'.{fileExtension}'
+        return (
+            self.fileImageExtensionDict[fileExtension]
+            if fileExtension in self.fileImageExtensionDict.keys()
+            else None
+        )
 
 #     def IsDevice(self, path):
 #         """Is the path some sort of device"""
@@ -1205,7 +1170,6 @@ class FolderIconManager():
             '.yml':'yaml.png',
 
             }
-        pass
 
     def PopulateImageList(self, imglist):
         """Populate an ImageList with the icons for the file tree
@@ -1220,8 +1184,7 @@ class FolderIconManager():
                               '.rar', '.msi', '.avi', '.mp4', '.mov', '.flv', '.mpg', '.gif',
                               '.wma', '.mp3', '.wav', '.aac', '.m4a', '.dmg', '.tar', '.gz', ]:
             try:
-                icon = self.getIconByExtension(extensionName)
-                if icon:
+                if icon := self.getIconByExtension(extensionName):
                     imglist.Add(icon)
                     self.iconsDictIndex[extensionName] = count
                     self.fileImageExtensionDict[extensionName] = extensionName
@@ -1249,8 +1212,8 @@ class FolderIconManager():
                 icon, file, idx = fileType.GetIconInfo()
                 if icon.IsOk():
                     icon = icon
-            except :
-                logger.error('some error :' + extension)
+            except:
+                logger.error(f'some error :{extension}')
 #        This is to supress warning
         del noLog
         return icon
@@ -1265,10 +1228,7 @@ class FolderIconManager():
             imageName = 'stop.png'
 
         elif os.path.isdir(path):
-            if expanded:
-                imageName = 'folder_view.png'
-            else:
-                imageName = 'folder.png'
+            imageName = 'folder_view.png' if expanded else 'folder.png'
         elif os.path.isfile(path):
             filename, fileExtension = os.path.splitext(path)
             fileExtension = fileExtension.lower()
@@ -1278,12 +1238,11 @@ class FolderIconManager():
         return self.iconsDictIndex[imageName]
 
     def getFileImageNameByExtension(self, fileExtension=None):
-        imageName = None
-
-        if fileExtension in self.fileImageExtensionDict.keys():
-            imageName = self.fileImageExtensionDict[fileExtension]
-
-        return imageName
+        return (
+            self.fileImageExtensionDict[fileExtension]
+            if fileExtension in self.fileImageExtensionDict.keys()
+            else None
+        )
 
 class HeaderPanel(wx.Panel):
 

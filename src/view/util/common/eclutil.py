@@ -69,27 +69,20 @@ def BestLabelColour(color):
 
     """
     avg = sum(color.Get()) // 3
-    if avg > 128:
-        txt_color = wx.BLACK
-    else:
-        txt_color = wx.WHITE
-    return txt_color
+    return wx.BLACK if avg > 128 else wx.WHITE
 
 def GetHighlightColour():
     """Get the default highlight color
     @return: wx.Colour
 
     """
-    if wx.Platform == '__WXMAC__':
-        if CARBON:
-            if hasattr(wx, 'MacThemeColour'):
-                color = wx.MacThemeColour(Carbon.Appearance.kThemeBrushFocusHighlight)
-                return color
-            else:
-                # kThemeBrushButtonPressedLightHighlight
-                brush = wx.Brush(wx.BLACK)
-                brush.MacSetTheme(Carbon.Appearance.kThemeBrushFocusHighlight)
-                return brush.GetColour()
+    if wx.Platform == '__WXMAC__' and CARBON:
+        if hasattr(wx, 'MacThemeColour'):
+            return wx.MacThemeColour(Carbon.Appearance.kThemeBrushFocusHighlight)
+        # kThemeBrushButtonPressedLightHighlight
+        brush = wx.Brush(wx.BLACK)
+        brush.MacSetTheme(Carbon.Appearance.kThemeBrushFocusHighlight)
+        return brush.GetColour()
 
     # Fallback to text highlight color
     return wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
@@ -107,7 +100,7 @@ def HexToRGB(hex_str):
         ldiff = 6 - len(hexval)
         hexval += ldiff * u"0"
         # Convert hex values to integer
-        red = int(hexval[0:2], 16)
+        red = int(hexval[:2], 16)
         green = int(hexval[2:4], 16)
         blue = int(hexval[4:], 16)
     else:
@@ -160,11 +153,7 @@ def DrawCircleCloseBmp(colour, backColour=None, option=DRAW_CIRCLE_SMALL):
 
     defs = __CircleDefs.get(option)
     size = defs['size']
-    if option != DRAW_CIRCLE_SMALL:
-        # Adjust for border
-        diameter = size[0] - 1
-    else:
-        diameter = size[0]
+    diameter = size[0] - 1 if option != DRAW_CIRCLE_SMALL else size[0]
     radius = float(diameter) / 2.0
     xpath = defs['xpath']
 
@@ -187,11 +176,7 @@ def DrawCircleCloseBmp(colour, backColour=None, option=DRAW_CIRCLE_SMALL):
     gc.StrokePath(path)
 
     path = gc.CreatePath()
-    if backColour is not None:
-        pen = wx.Pen(backColour, 1)
-    else:
-        pen = wx.Pen("white", 1)
-
+    pen = wx.Pen(backColour, 1) if backColour is not None else wx.Pen("white", 1)
     pen.SetCap(wx.CAP_BUTT)
     pen.SetJoin(wx.JOIN_BEVEL)
     gc.SetPen(pen)

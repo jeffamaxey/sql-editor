@@ -127,16 +127,21 @@ class WelcomePanel(wx.Panel):
     # WebView events
     def OnWebViewNavigating(self, evt):
         # this event happens prior to trying to get a resource
-        if evt.GetURL() == 'http://www.microsoft.com/':
-            if wx.MessageBox("Are you sure you want to visit Microsoft?",
-                             style=wx.YES_NO|wx.ICON_QUESTION) == wx.NO:
-                # This is how you can cancel loading a page.
-                evt.Veto()
+        if (
+            evt.GetURL() == 'http://www.microsoft.com/'
+            and wx.MessageBox(
+                "Are you sure you want to visit Microsoft?",
+                style=wx.YES_NO | wx.ICON_QUESTION,
+            )
+            == wx.NO
+        ):
+            # This is how you can cancel loading a page.
+            evt.Veto()
 
 
     def OnWebViewNavigated(self, evt):
         if self.frame.GetStatusBar():
-            self.frame.SetStatusText("Loading %s..." % evt.GetURL())
+            self.frame.SetStatusText(f"Loading {evt.GetURL()}...")
 
 
     def OnWebViewLoaded(self, evt):
@@ -149,7 +154,7 @@ class WelcomePanel(wx.Panel):
 
     def OnWebViewTitleChanged(self, evt):
         # Set the frame's title to include the document's title
-        self.frame.SetTitle("%s -- %s" % (self.titleBase, evt.GetString()))
+        self.frame.SetTitle(f"{self.titleBase} -- {evt.GetString()}")
 
 
     # Control bar events
@@ -176,12 +181,12 @@ class WelcomePanel(wx.Panel):
         self.wv.LoadURL(url)
     def OnPrevPageButton(self, event):
         for i in self.wv.GetBackwardHistory():
-            logger.debug("%s %s" % (i.Url, i.Title))
+            logger.debug(f"{i.Url} {i.Title}")
         self.wv.GoBack()
 
     def OnNextPageButton(self, event):
         for i in self.wv.GetForwardHistory():
-            logger.debug("%s %s" % (i.Url, i.Title))
+            logger.debug(f"{i.Url} {i.Title}")
         self.wv.GoForward()
 
     def OnCheckCanGoBack(self, event):

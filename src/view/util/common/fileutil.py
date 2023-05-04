@@ -60,7 +60,7 @@ def AddFileExtension(path, ext):
     """
 #     assert isinstance(ext, basestring)
     if not ext.startswith('.'):
-        ext = '.' + ext
+        ext = f'.{ext}'
     if not path.endswith(ext):
         path = path + ext
     return path
@@ -160,7 +160,7 @@ def GetPathFromURI(path):
                 # the C: drive.
                 path = u"C:\\\\" + path
         else:
-            path = u"/" + path
+            path = f"/{path}"
         path = urllib.parse.unquote(path)
 
     return path
@@ -268,7 +268,7 @@ def GetFileManagerCmd():
         # Check for common linux filemanagers returning first one found
         #          Gnome/ubuntu KDE/kubuntu  xubuntu
         for cmd in ('xdg-open', 'nautilus', 'konqueror', 'Thunar'):
-            result = os.system("which %s > /dev/null" % cmd)
+            result = os.system(f"which {cmd} > /dev/null")
             if result == 0:
                 return cmd
         else:
@@ -288,15 +288,13 @@ def Which(program):
     @return: executable path or None
 
     """
-    # Check local directory first
     if IsExecutable(program):
         return program
-    else:
-        # Start looking on the $PATH
-        for path in os.environ["PATH"].split(os.pathsep):
-            exe_file = os.path.join(path, program)
-            if IsExecutable(exe_file):
-                return exe_file        
+    # Start looking on the $PATH
+    for path in os.environ["PATH"].split(os.pathsep):
+        exe_file = os.path.join(path, program)
+        if IsExecutable(exe_file):
+            return exe_file
     return None
 
 def GetDirectoryObject(path, recurse=True, includedot=False):
@@ -362,7 +360,7 @@ class Directory(File):
     def __init__(self, path):
         super(Directory, self).__init__(path)
 
-        self.files = list()
+        self.files = []
 
     Files = property(lambda self: self.files)
 

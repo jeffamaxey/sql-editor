@@ -13,6 +13,7 @@ AUTHOR: Cody Precord
 
 """
 
+
 __author__ = "Cody Precord <cprecord@editra.org>"
 __svnid__ = "$Id: _perl.py 66108 2010-11-10 21:04:54Z CJP $"
 __revision__ = "$Revision: 66108 $"
@@ -94,10 +95,13 @@ SYNTAX_ITEMS = [ (stc.STC_PL_DEFAULT, 'default_style'),
                  (stc.STC_PL_WORD, 'keyword_style') ]
 
 if wx.VERSION >= (2, 9, 0, 0, ''):
-    SYNTAX_ITEMS.append((stc.STC_PL_FORMAT, 'default_style')) #TODO
-    SYNTAX_ITEMS.append((stc.STC_PL_FORMAT_IDENT, 'default_style')) #TODO
-    SYNTAX_ITEMS.append((stc.STC_PL_SUB_PROTOTYPE, 'default_style')) #TODO
-
+    SYNTAX_ITEMS.extend(
+        (
+            (stc.STC_PL_FORMAT, 'default_style'),
+            (stc.STC_PL_FORMAT_IDENT, 'default_style'),
+            (stc.STC_PL_SUB_PROTOTYPE, 'default_style'),
+        )
+    )
 #---- Extra Properties ----#
 FOLD = ("fold", "1")
 FLD_COMPACT = ("fold.compact", "1")
@@ -137,10 +141,7 @@ def KeywordString(option=0):
     @note: not used by most modules
 
     """
-    if option == synglob.ID_LANG_PERL:
-        return PERL_KW[1]
-    else:
-        return u''
+    return PERL_KW[1] if option == synglob.ID_LANG_PERL else u''
 
 #---- End Syntax Modules Internal Functions ----#
 

@@ -56,9 +56,9 @@ def GetWindowsDrives():
 
     """
     assert wx.Platform == '__WXMSW__', "Windows Only API Method"
-    drives = list()
+    drives = []
     try:
-        dletters = list()
+        dletters = []
         bmask = ctypes.windll.kernel32.GetLogicalDrives()
         for dletter in u"ABCDEFGHIJKLMNOPQRSTUVWXYZ":
             if bmask & 1:
@@ -82,8 +82,7 @@ def GetWindowsDriveType(dname):
         dtypes = [None, None, RemovableDrive, FixedDrive, RemoteDrive, CDROMDrive, RamDiskDrive]
         idx = ctypes.windll.kernel32.GetDriveTypeW(dname)
         if idx < len(dtypes):
-            drive = dtypes[idx]
-            if drive:
+            if drive := dtypes[idx]:
                 dtype = drive(dname)
     except:
         pass

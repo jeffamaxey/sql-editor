@@ -28,13 +28,13 @@ class BookImage():
 #             os.chdir(path)
             cmd = f'''{path} -f 1 -l 1 -jpeg "{name}.pdf" "{name}"'''
         else:
-            cmd = 'convert -background white -alpha remove "' + name + '.pdf[0]' + '" "' + name + '.jpg' + '"'
-            
+            cmd = f'convert -background white -alpha remove "{name}.pdf[0]" "{name}.jpg"'
+
         logger.debug(cmd)
         subprocess.call(cmd, shell=True)
         
     def getDjuvBookImage(self, name=None):
-        cmd = 'ddjvu -page=1 -format=pnm "' + name + '.djvu" 1.pnm && pnmtojpeg 1.pnm > "' + name + '.jpg" && rm *.pnm'
+        cmd = f'ddjvu -page=1 -format=pnm "{name}.djvu" 1.pnm && pnmtojpeg 1.pnm > "{name}.jpg" && rm *.pnm'
         subprocess.call(cmd, shell=True)
         
     def getChmBookImage(self, name=None):
@@ -44,7 +44,7 @@ class BookImage():
     def getCbrBookImage(self, name=None):
         
         logger.info('getCbrBookImage')
-        rar = rarfile.RarFile(name + ".cbr")
+        rar = rarfile.RarFile(f"{name}.cbr")
         nameList = rar.namelist()
         nameList.sort()
         try:
@@ -68,28 +68,26 @@ class BookImage():
         '''
         logger.debug('getBookImage')
         os.chdir(filePath)
-        if 'pdf' == bookFormat.lower():
+        if bookFormat.lower() == 'pdf':
             self.getPdfBookImage(name)
-            
-#             self.convert(os.path.join(filePath,name))
 
-        elif 'djvu' == bookFormat.lower():
+        elif bookFormat.lower() == 'djvu':
             self.getDjuvBookImage(name)
-            
-        elif 'chm' == bookFormat.lower():
+
+        elif bookFormat.lower() == 'chm':
             self.getChmBookImage(name)
-            
-        elif 'epub' == bookFormat.lower():
-            file_name = name + '.epub'
+
+        elif bookFormat.lower() == 'epub':
+            file_name = f'{name}.epub'
             epubBook = EpubBook()
             epubBook.open(file_name)
-        
+
             epubBook.parse_contents()
-            epubBook.extract_cover_image(name + '.jpg', outdir='.',)
-        elif 'cbr' == bookFormat.lower():
-            logger.info('bookFormat:' + bookFormat)
-            self.getCbrBookImage(name)    
-        elif 'mobi' == bookFormat:
+            epubBook.extract_cover_image(f'{name}.jpg', outdir='.')
+        elif bookFormat.lower() == 'cbr':
+            logger.info(f'bookFormat:{bookFormat}')
+            self.getCbrBookImage(name)
+        elif bookFormat == 'mobi':
             print('work in progress')
         print('getBookImage completed')
 
@@ -107,5 +105,3 @@ if __name__ == "__main__":
 #     pdfFilePath=os.path.join(filePath, name+'.pdf')
 #     imageFilePath=os.path.join(filePath, name+'.jpg')
     BookImage().getBookImage(filePath, name, bookFormat='pdf')
-#     print 'e'
-    pass

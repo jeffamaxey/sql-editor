@@ -67,25 +67,38 @@ class SearchPanelsFrame(wx.Frame):
 #         self.SetMinSize(wx.Size(400, 300))
         # this is to set tab on top
         self._mgr.SetAutoNotebookStyle(aui.AUI_NB_DEFAULT_STYLE | wx.BORDER_NONE)
-        
+
         self.buttonPanel = CreateButtonPanel(self)
         self.fileSearchPanel = CreateFileSearchPanel(self)
         fileSearchPaneInfo = aui.AuiPaneInfo().Name("fileSearch").Icon(self.fileOperations.getImageBitmap(imageName="search_history.png")).Caption("File Search")\
-                        .Direction(wx.TOP).Row(0).Center().Layer(0).Position(0).Dockable(True)\
-                        .CaptionVisible(False).MinimizeButton(False).CloseButton(False)
+                            .Direction(wx.TOP).Row(0).Center().Layer(0).Position(0).Dockable(True)\
+                            .CaptionVisible(False).MinimizeButton(False).CloseButton(False)
         self._mgr.AddPane(self.fileSearchPanel, fileSearchPaneInfo)
 
         self.fileSearchPanel1 = CreateFileSearchPanel(self)
-        self._mgr.AddPane(self.fileSearchPanel1, aui.AuiPaneInfo().Icon(self.fileOperations.getImageBitmap(imageName="search_history.png")).
-                          Name(f"taskSearch").Caption(f"Task Search").Dockable(False)
-                          .Center().Layer(0).Position(1).CaptionVisible(False)
-                          .MinimizeButton(False).CloseButton(False), target=fileSearchPaneInfo)
-        
+        self._mgr.AddPane(
+            self.fileSearchPanel1,
+            aui.AuiPaneInfo()
+            .Icon(
+                self.fileOperations.getImageBitmap(imageName="search_history.png")
+            )
+            .Name("taskSearch")
+            .Caption("Task Search")
+            .Dockable(False)
+            .Center()
+            .Layer(0)
+            .Position(1)
+            .CaptionVisible(False)
+            .MinimizeButton(False)
+            .CloseButton(False),
+            target=fileSearchPaneInfo,
+        )
+
         self._mgr.AddPane(self.buttonPanel, aui.AuiPaneInfo().
                           Name("button").Caption("Button")
                           .Layer(0).Bottom().CaptionVisible(False)
                           .MinimizeButton(True).CloseButton(False))
-        
+
         self._mgr.Update()
 
 

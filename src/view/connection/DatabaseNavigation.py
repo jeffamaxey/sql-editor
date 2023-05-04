@@ -43,15 +43,14 @@ class DatabaseNavigationTree(ExpansionState, TreeCtrl):
             
     def AppendItem(self, parent, text, image=-1, wnd=None):
 
-        item = TreeCtrl.AppendItem(self, parent, text, image=image)
-        return item
+        return TreeCtrl.AppendItem(self, parent, text, image=image)
     #---------------------------------------------
 
     def OnKey(self, event):
         logger.debug('onkey')
         keycode = event.GetKeyCode()
         keyname = keyMap.get(keycode, None)
-                
+
         if keycode == wx.WXK_BACK:
             self.log.write("OnKeyDown: HAHAHAHA! I Vetoed Your Backspace! HAHAHAHA\n")
             return
@@ -63,19 +62,19 @@ class DatabaseNavigationTree(ExpansionState, TreeCtrl):
                     keycode = event.GetKeyCode()
                 keyname = "\"" + event.GetUnicodeKey() + "\""
                 if keycode < 27:
-                    keyname = "Ctrl-%s" % chr(ord('A') + keycode - 1)
-                
+                    keyname = f"Ctrl-{chr(ord('A') + keycode - 1)}"
+
             elif keycode < 256:
                 if keycode == 0:
                     keyname = "NUL"
                 elif keycode < 27:
-                    keyname = "Ctrl-%s" % chr(ord('A') + keycode - 1)
+                    keyname = f"Ctrl-{chr(ord('A') + keycode - 1)}"
                 else:
                     keyname = "\"%s\"" % chr(keycode)
             else:
-                keyname = "unknown (%s)" % keycode
-                
-        self.log.write("OnKeyDown: You Pressed '" + keyname + "'\n")
+                keyname = f"unknown ({keycode})"
+
+        self.log.write(f"OnKeyDown: You Pressed '{keyname}" + "'\n")
 
         event.Skip()            
     def BuildTreeImageList(self):

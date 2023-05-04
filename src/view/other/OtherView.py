@@ -134,7 +134,7 @@ class OtherViewTreePanel(wx.Panel):
         wx.Panel.__init__(self, parent, id=-1)
         self.parent = parent
 #         self.fileOperations = FileOperations()
-        self.connDict = dict()
+        self.connDict = {}
         vBox = wx.BoxSizer(wx.VERTICAL)
         ####################################################################
         self.treeMap = {}
@@ -171,9 +171,7 @@ class OtherViewTreePanel(wx.Panel):
 
         # Catch the search type (name or content)
         searchMenu = self.filter.GetMenu().GetMenuItems()
-        fullSearch = searchMenu[1].IsChecked()
-
-        if fullSearch:
+        if fullSearch := searchMenu[1].IsChecked():
             self.OnSearch()
         else:
             self.RecreateTree()
@@ -210,19 +208,16 @@ class OtherViewTreePanel(wx.Panel):
         searchMenu = self.filter.GetMenu().GetMenuItems()
         fullSearch = searchMenu[1].IsChecked()
 
-        if evt:
-            if fullSearch:
-                # Do not`scan all the demo files for every char
-                # the user input, use wx.EVT_TEXT_ENTER instead
-                return
+        if evt and fullSearch:
+            # Do not`scan all the demo files for every char
+            # the user input, use wx.EVT_TEXT_ENTER instead
+            return
 
         expansionState = self.tree.GetExpansionState()
 
         current = None
-        item = self.tree.GetSelection()
-        if item:
-            prnt = self.tree.GetItemParent(item)
-            if prnt:
+        if item := self.tree.GetSelection():
+            if prnt := self.tree.GetItemParent(item):
                 current = (self.tree.GetItemText(item),
                            self.tree.GetItemText(prnt))
 
@@ -244,10 +239,6 @@ class OtherViewTreePanel(wx.Panel):
 
         treeFont.SetWeight(wx.BOLD)
         catFont.SetWeight(wx.BOLD)
-#         self.tree.SetItemFont(self.root, treeFont)
-
-        firstChild = None
-        selectItem = None
         filter = self.filter.GetValue()
         count = 0
 
@@ -258,37 +249,13 @@ class OtherViewTreePanel(wx.Panel):
         treeItems = treeSearch.searchedNodes(dataList=viewdataList, searchText=searchText)
 
         self.constructNode(parent=self.root, treeData=treeItems)
-#         for category, items in _treeList:
-#             category, items
-#             count += 1
-#             if filter:
-#                 if fullSearch:
-#                     items = self.searchItems[category]
-#                 else:
-#                     items = [item for item in items if filter.lower() in item.lower()]
-#             if items:
-#                 child = self.tree.AppendItem(self.root, category, image=count)
-#                 self.tree.SetItemFont(child, catFont)
-#                 self.tree.SetItemData(child, count)
-#                 if not firstChild: firstChild = child
-#                 for childItem in items:
-#                     image = count
-# #                     if DoesModifiedExist(childItem):
-# #                         image = len(_demoPngs)
-#                     theDemo = self.tree.AppendItem(child, childItem, image=image)
-#                     self.tree.SetItemData(theDemo, count)
-#                     self.treeMap[childItem] = theDemo
-#                     if current and (childItem, category) == current:
-#                         selectItem = theDemo
-
-#         self.tree.Expand(self.root)
-        if firstChild:
+        if firstChild := None:
             self.tree.Expand(firstChild)
         if filter:
             self.tree.ExpandAll()
         elif expansionState:
             self.tree.SetExpansionState(expansionState)
-        if selectItem:
+        if selectItem := None:
             self.skipLoad = True
             self.tree.SelectItem(selectItem)
             self.skipLoad = False
@@ -302,19 +269,16 @@ class OtherViewTreePanel(wx.Panel):
         searchMenu = self.filter.GetMenu().GetMenuItems()
         fullSearch = searchMenu[1].IsChecked()
 
-        if evt:
-            if fullSearch:
-                # Do not`scan all the demo files for every char
-                # the user input, use wx.EVT_TEXT_ENTER instead
-                return
+        if evt and fullSearch:
+            # Do not`scan all the demo files for every char
+            # the user input, use wx.EVT_TEXT_ENTER instead
+            return
 
         expansionState = self.tree.GetExpansionState()
 
         current = None
-        item = self.tree.GetSelection()
-        if item:
-            prnt = self.tree.GetItemParent(item)
-            if prnt:
+        if item := self.tree.GetSelection():
+            if prnt := self.tree.GetItemParent(item):
                 current = (self.tree.GetItemText(item),
                            self.tree.GetItemText(prnt))
 
@@ -338,8 +302,6 @@ class OtherViewTreePanel(wx.Panel):
         catFont.SetWeight(wx.BOLD)
         self.tree.SetItemFont(self.root, treeFont)
 
-        firstChild = None
-        selectItem = None
         filter = self.filter.GetValue()
         count = 0
 
@@ -367,13 +329,13 @@ class OtherViewTreePanel(wx.Panel):
 #                         selectItem = theDemo
 
         self.tree.Expand(self.root)
-        if firstChild:
+        if firstChild := None:
             self.tree.Expand(firstChild)
         if filter:
             self.tree.ExpandAll()
         elif expansionState:
             self.tree.SetExpansionState(expansionState)
-        if selectItem:
+        if selectItem := None:
             self.skipLoad = True
             self.tree.SelectItem(selectItem)
             self.skipLoad = False
@@ -403,7 +365,7 @@ class OtherViewTreePanel(wx.Panel):
         pt = event.GetPosition();
         item, flags = self.tree.HitTest(pt)
         if item and item == self.tree.GetSelection():
-            print(self.tree.GetItemText(item) + " Overview")
+            print(f"{self.tree.GetItemText(item)} Overview")
         event.Skip()
 
     #---------------------------------------------
@@ -416,15 +378,14 @@ class OtherViewTreePanel(wx.Panel):
             item = event.GetItem()
             itemText = self.tree.GetItemText(item)
             logger.debug(itemText)
-            opalPreference = self.GetTopLevelParent()
-            if opalPreference:
+            if opalPreference := self.GetTopLevelParent():
         #         rightPanel=opalPreference.rightPanelItem.GetParent()
         #         opalPreference.rightPanelItem.Hide()
         #         opalPreference.rightPanelItem.Hide()
         #         opalPreference.rightPanelItem=opalPreference.getPreferencePanelObj(rightPanel,preferenceName=itemText)
         #         opalPreference.rightPanelItem.Show(True)
         #         opalPreference.rightPanelItem.Layout()
-                pnl_children = list()
+                pnl_children = []
                 if hasattr(opalPreference, 'png'):
                     pnl_children = opalPreference.pnl.GetChildren()
                 for pnl in pnl_children:
@@ -471,8 +432,7 @@ class OtherViewBaseTreePanel(ExpansionState, TreeCtrl):
 
     def AppendItem(self, parent, text, image=-1, wnd=None):
 
-        item = TreeCtrl.AppendItem(self, parent, text, image=image)
-        return item
+        return TreeCtrl.AppendItem(self, parent, text, image=image)
 
     def BuildTreeImageList(self):
 #         imgList = wx.ImageList(16, 16)
@@ -497,12 +457,12 @@ class OtherViewBaseTreePanel(ExpansionState, TreeCtrl):
         imageNameSet=set()
         for data in viewdataList:
             for dx in data:
-                if type(dx)==type(list()):
+                if type(dx) == type([]):
                     for d in dx:
                         imageNameSet.add(d[2])
             imageNameSet.add(data[2])
         imageNameList=list(imageNameSet)
-        
+
 #         for imageName in ['preference.png', 'folderType_filter.png', 'eclipse_open_folder.png', 'fileType_filter.png', 'usb.png', 'stop.png',
 #                           'java.png', 'python_module.png', 'xml.png', "other_view.png", 'console_view.png', 'register_view.png',
 #                           'debug_view.png' , 'history_view.png', 'compare_view.png', 'breakpoint_view.png', 'watchlist_view.png',

@@ -62,7 +62,7 @@ class ThumbnailCtrlDemoPanel(wx.Panel):
 
         scroll.ShowFileNames()
         if os.path.isdir("../bitmaps"):
-            scroll.ShowDir(os.path.normpath(os.getcwd() + "/../bitmaps"))
+            scroll.ShowDir(os.path.normpath(f"{os.getcwd()}/../bitmaps"))
         else:
             scroll.ShowDir(os.getcwd())
 

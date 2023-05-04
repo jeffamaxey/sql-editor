@@ -89,10 +89,7 @@ class CreatingNewConnectionPanel(wx.Panel):
         wx.BeginBusyCursor()
         try:
             for category, items in self._treeList[1]:
-                self.searchItems[category] = []
-                for childItem in items:
-    #                 if SearchDemo(childItem, value):
-                    self.searchItems[category].append(childItem)
+                self.searchItems[category] = list(items)
         except Exception as e:
             logger.error(e, exc_info=True)
         wx.EndBusyCursor()
@@ -103,23 +100,21 @@ class CreatingNewConnectionPanel(wx.Panel):
 #         searchMenu = self.filter.GetMenu().GetMenuItems()
 #         fullSearch = searchMenu[1].IsChecked()
         fullSearch = False   
-            
-        if evt:
-            if fullSearch:
-                # Do not`scan all the demo files for every char
-                # the user input, use wx.EVT_TEXT_ENTER instead
-                return
+
+        if evt and fullSearch:
+            # Do not`scan all the demo files for every char
+            # the user input, use wx.EVT_TEXT_ENTER instead
+            return
 
         expansionState = self.tree.GetExpansionState()
 
         current = None
-        item = self.tree.GetSelection()
-        if item:
+        if item := self.tree.GetSelection():
             prnt = self.tree.GetItemParent(item)
 #             if prnt:
 #                 current = (self.tree.GetItemText(item),
 #                            self.tree.GetItemText(prnt))
-                    
+
         self.tree.Freeze()
         self.tree.DeleteAllItems()
         self.root = self.tree.AddRoot("Connections")
@@ -135,16 +130,16 @@ class CreatingNewConnectionPanel(wx.Panel):
         # was the size of the same label in the default font.
         if 'wxMSW' not in wx.PlatformInfo:
             treeFont.SetPointSize(treeFont.GetPointSize() + 2)
-            
+
         treeFont.SetWeight(wx.BOLD)
         catFont.SetWeight(wx.BOLD)
 #         self.tree.SetItemFont(self.root, treeFont)
-        
+
         firstChild = None
         selectItem = None
         filter = self.filter.GetValue()
         count = 0
-        
+
 
         databaseLeaf = self.tree.AppendItem(self.root, 'SQLite', image=16)
 
@@ -178,15 +173,14 @@ class DatabaseNavigationTree(ExpansionState, TreeCtrl):
             
     def AppendItem(self, parent, text, image=-1, wnd=None):
 
-        item = TreeCtrl.AppendItem(self, parent, text, image=image)
-        return item
+        return TreeCtrl.AppendItem(self, parent, text, image=image)
     #---------------------------------------------
 
     def OnKey(self, event):
         logger.debug('onkey')
         keycode = event.GetKeyCode()
         keyname = keyMap.get(keycode, None)
-                
+
         if keycode == wx.WXK_BACK:
             self.log.write("OnKeyDown: HAHAHAHA! I Vetoed Your Backspace! HAHAHAHA\n")
             return
@@ -198,19 +192,19 @@ class DatabaseNavigationTree(ExpansionState, TreeCtrl):
                     keycode = event.GetKeyCode()
                 keyname = "\"" + event.GetUnicodeKey() + "\""
                 if keycode < 27:
-                    keyname = "Ctrl-%s" % chr(ord('A') + keycode - 1)
-                
+                    keyname = f"Ctrl-{chr(ord('A') + keycode - 1)}"
+
             elif keycode < 256:
                 if keycode == 0:
                     keyname = "NUL"
                 elif keycode < 27:
-                    keyname = "Ctrl-%s" % chr(ord('A') + keycode - 1)
+                    keyname = f"Ctrl-{chr(ord('A') + keycode - 1)}"
                 else:
                     keyname = "\"%s\"" % chr(keycode)
             else:
-                keyname = "unknown (%s)" % keycode
-                
-        self.log.write("OnKeyDown: You Pressed '" + keyname + "'\n")
+                keyname = f"unknown ({keycode})"
+
+        self.log.write(f"OnKeyDown: You Pressed '{keyname}" + "'\n")
 
         event.Skip()            
     def BuildTreeImageList(self):

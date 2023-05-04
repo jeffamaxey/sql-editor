@@ -71,7 +71,7 @@ class SyntaxData(syndata.SyntaxDataBase):
         elif self.LangId == synglob.ID_LANG_OCTAVE:
             return [OCTAVE_KW]
         else:
-            return list()
+            return []
 
     def GetSyntaxSpec(self):
         """Syntax Specifications """
@@ -88,4 +88,4 @@ class SyntaxData(syndata.SyntaxDataBase):
         elif self.LangId == synglob.ID_LANG_OCTAVE:
             return [u'#']
         else:
-            return list()
+            return []

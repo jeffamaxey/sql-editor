@@ -144,26 +144,27 @@ class VertEdit(object):
         return True
 
     def OnModified(self, evt):
-        if self.Enabled and self.state > STATE_OFF:
-            fn = None
-            if evt.ModificationType & VertEdit.INS == VertEdit.INS:
-                col = self.insCol or self.e.GetColumn(evt.Position)
-                fn = partial(self.fn_ins, col, evt.Text)
-                self.insCol = None
-            elif evt.ModificationType & VertEdit.DEL == VertEdit.DEL:
-                if self.state == STATE_ACTIVE:
-                    fn = partial(self.fn_del, self.e.GetColumn(evt.Position), self.delCol2)
-            elif evt.ModificationType & VertEdit.BDEL == VertEdit.BDEL:
-                self.delCol2 = self.e.GetColumn(evt.Position + evt.Length)
-                if self.state == STATE_SELECTION and not self.gotDeletes:
-                    self.gotDeletes = True
-                    self.insCol = self.e.GetColumn(self.e.CurrentPos)
+        if not self.Enabled or self.state <= STATE_OFF:
+            return
+        fn = None
+        if evt.ModificationType & VertEdit.INS == VertEdit.INS:
+            col = self.insCol or self.e.GetColumn(evt.Position)
+            fn = partial(self.fn_ins, col, evt.Text)
+            self.insCol = None
+        elif evt.ModificationType & VertEdit.DEL == VertEdit.DEL:
+            if self.state == STATE_ACTIVE:
+                fn = partial(self.fn_del, self.e.GetColumn(evt.Position), self.delCol2)
+        elif evt.ModificationType & VertEdit.BDEL == VertEdit.BDEL:
+            self.delCol2 = self.e.GetColumn(evt.Position + evt.Length)
+            if self.state == STATE_SELECTION and not self.gotDeletes:
+                self.gotDeletes = True
+                self.insCol = self.e.GetColumn(self.e.CurrentPos)
 
-            if fn:
-                if evt.LinesAdded:
-                    self.endMode()
-                else:
-                    self.stack.append(fn)
+        if fn:
+            if evt.LinesAdded:
+                self.endMode()
+            else:
+                self.stack.append(fn)
 
     def SetBlockColor(self, color):
         """Set the block background color used during the highlight
@@ -202,9 +203,9 @@ class VertEdit(object):
             newA = self.e.PositionFromLine(self.curLine)
             if newA == self.e.CurrentPos:
                 newA = self.e.GetLineEndPosition(self.curLine)
-                if newA == self.e.CurrentPos:
-                    self.e.CurrentPos -= 1
-                    newA += 1
+            if newA == self.e.CurrentPos:
+                self.e.CurrentPos -= 1
+                newA += 1
             self.e.Anchor = newA
             self.jitter = newA
 

@@ -156,6 +156,6 @@ def GetIdFromDescription(desc):
     globs = dict(globals())
     for key, val in globs.iteritems():
         if val.lower() == desc and key.startswith('LANG_'):
-            rval = globs.get("ID_" + key, ID_LANG_TXT)
+            rval = globs.get(f"ID_{key}", ID_LANG_TXT)
             break
     return rval

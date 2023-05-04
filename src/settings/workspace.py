@@ -68,10 +68,7 @@ class Setting():
 #         self.activeWorkspace = self.getActiveWorkspace()
 
     def showWorkspaceSelection(self):
-        showDialog = True
-        if any([workspce.active for workspce in self.workspaces]):
-            showDialog = False
-        return showDialog
+        return not any(workspce.active for workspce in self.workspaces)
 
     def addWorkspace(self, workspace=None):
         for workspce in self.workspaces:
@@ -83,12 +80,9 @@ class Setting():
         self.showWorkspaceSelectionDialog = self.showWorkspaceSelection()
 
     def getActiveWorkspace(self):
-        activeWorkspce = None
-        for workspce in self.workspaces:
-            if workspce.active:
-                activeWorkspce = workspce
-                break
-        return activeWorkspce
+        return next(
+            (workspce for workspce in self.workspaces if workspce.active), None
+        )
 
     def loadSettings(self):
         workspace = Workspace(workspacePath=r'C:\Users\xbbntni\eclipse-workspace')
@@ -132,20 +126,16 @@ def convert_to_dict(obj):
     This dict representation includes meta data such as the object's module and class names.
     """
     serial = None
-    if isinstance(obj, date):
-        serial = obj.isoformat()
-    else:
-        serial = obj.__module__
-
+    serial = obj.isoformat() if isinstance(obj, date) else obj.__module__
     #  Populate the dictionary with object meta data 
     obj_dict = {
       "__class__": obj.__class__.__name__,
       "__module__": serial
     }
-    
+
     #  Populate the dictionary with object properties
-    obj_dict.update(obj.__dict__)
-    
+    obj_dict |= obj.__dict__
+
     return obj_dict
 
 

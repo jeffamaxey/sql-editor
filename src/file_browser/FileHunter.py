@@ -63,7 +63,7 @@ class MyListCtrl(wx.ListCtrl):
 
             self.InsertItem(j, name)
             self.SetItem(j, 1, ex)
-            self.SetItem(j, 2, str(size) + ' B')
+            self.SetItem(j, 2, f'{str(size)} B')
             self.SetItem(j, 3, time.strftime('%Y-%m-%d %H:%M', time.localtime(sec)))
 
             if os.path.isdir(i):

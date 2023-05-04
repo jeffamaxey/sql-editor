@@ -121,8 +121,7 @@ class WorkspaceDatasource():
         return workspace.projects
 
     def addProject(self, project):
-        workspace = self.findActiveWorkspace()
-        if workspace:
+        if workspace := self.findActiveWorkspace():
             workspace.projects.append(project)
             self.saveEntity(workspace)
         
@@ -177,31 +176,5 @@ if __name__ == '__main__':
 #     datasource.addProject(Project(r'C:\work\python_project', r'sql_editor', r'sql-editor'))
 #     workspaceSettingLink=workspace.workspace_setting_assoc[0]
 #     workspaceSettingLink.
-    
+
     print('hi')
-#     datasource.saveEntity(workspace.projects.append(Project(r'C:\work\python_project','Phoenix','Phoenix')))
-#     datasource.recreateDatabase()
-
-#     CreateDatabase().addingData()
-
-#     books = CreateDatabase().findByBookName("java")
-#     libraryPath = r'/docs/new/library'
-#     if not os.path.exists(libraryPath):
-#         print('no workspace')
-        
-#     try:
-#         createdb = CreateDatabase()
-# #         createdb.creatingDatabase()
-# #         createdb.addingData()
-#         x = createdb.getMaxBookID()
-#         page = createdb.pagination(10, 10)
-#         logger.debug(page)
-# #         createdb.findAllBook()
-#     except Exception as e:
-#         print(e)
-#     for b in books:
-#         print b.isbn_13, b.id
-
-#         createdb.removeBook(b)
-
-    pass

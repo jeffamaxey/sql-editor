@@ -42,7 +42,7 @@ class OpenExistingConnectionFrame(wx.Dialog):
         logger.info('createStatusBar')
         self.statusbar = self.CreateStatusBar(2, wx.STB_SIZEGRIP)
         self.statusbar.SetStatusWidths([-2, -3])
-        self.statusbar.SetStatusText("Welcome {}".format(TITLE), 1)
+        self.statusbar.SetStatusText(f"Welcome {TITLE}", 1)
 
         
 class CreateOpenConnectionPanel(wx.Panel):

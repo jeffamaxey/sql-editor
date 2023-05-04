@@ -44,14 +44,14 @@ class AddBook():
         self.book = Book()
         self.book.uuid = str(uuid.uuid4())
         self.book.tag = None
-        self.book.authors = list()
+        self.book.authors = []
         self.libraryPath = libraryPath
         self.createDatabase = CreateDatabase(libraryPath=libraryPath)
 
     def getMaxBookID(self):
 
         maxBookId = self.createDatabase.getMaxBookID()
-        if maxBookId == None:
+        if maxBookId is None:
             maxBookId = 0
         return maxBookId
 
@@ -67,54 +67,53 @@ class AddBook():
         4. Make an entry in database.
         '''
 
-        if sourcePath:
-            #             if maxBookId:
-            #                 maxBookId = self.createDatabase.getMaxBookID()
-            #
-            #                 if maxBookId == None:
-            #                     maxBookId = 0
-            #             workspacePath = Workspace().libraryPath
+        if not sourcePath:
+            return
+        #             if maxBookId:
+        #                 maxBookId = self.createDatabase.getMaxBookID()
+        #
+        #                 if maxBookId == None:
+        #                     maxBookId = 0
+        #             workspacePath = Workspace().libraryPath
+        self.book.bookPath = os.path.join(self.libraryPath,
+                                          str(maxBookId + 1))
+
+        head, tail = os.path.split(sourcePath)
+        self.book.bookFileName = tail
+
+        self.book.inLanguage = 'English'
+        self.book.hasCover = 'Y'
+
+        splited_name = tail.split(".")
+        self.book.bookFormat = splited_name[-1:][0]
+        splited_name.remove(self.book.bookFormat)
+        book_file_name = '.'.join(splited_name)
+        self.book.bookName = book_file_name
+        self.book.wishListed = 'No'
+
+        if not self.findingSameBook():
+
             self.book.bookPath = os.path.join(self.libraryPath,
                                               str(maxBookId + 1))
+            if not os.path.exists(self.book.bookPath):
+                os.makedirs(self.book.bookPath)
 
-            head, tail = os.path.split(sourcePath)
-            self.book.bookFileName = tail
+            dest = os.path.join(self.book.bookPath, tail)
+            if sourcePath != dest:
+                shutil.copy(sourcePath, dest)
 
-            self.book.inLanguage = 'English'
-            self.book.hasCover = 'Y'
+            if self.book.bookFormat == 'pdf':
+                self.getPdfMetadata(sourcePath)
+            if self.book.bookFormat == 'epub':
+                self.getEpubMetadata(sourcePath)
+            os.chdir(self.book.bookPath)
+            self.book.bookImgName = f'{book_file_name}.jpg'
+            BookImage().getBookImage(self.book.bookPath, book_file_name,
+                                     self.book.bookFormat)
 
-            splited_name = tail.split(".")
-            self.book.bookFormat = splited_name[-1:][0]
-            splited_name.remove(self.book.bookFormat)
-            book_file_name = '.'.join(splited_name)
-            self.book.bookName = book_file_name
-            self.book.wishListed = 'No'
-
-            if not self.findingSameBook():
-
-                self.book.bookPath = os.path.join(self.libraryPath,
-                                                  str(maxBookId + 1))
-                if not os.path.exists(self.book.bookPath):
-                    os.makedirs(self.book.bookPath)
-
-                dest = os.path.join(self.book.bookPath, tail)
-                if sourcePath != dest:
-                    shutil.copy(sourcePath, dest)
-
-                if 'pdf' == self.book.bookFormat:
-                    self.getPdfMetadata(sourcePath)
-                if 'epub' == self.book.bookFormat:
-                    self.getEpubMetadata(sourcePath)
-                    pass
-
-                os.chdir(self.book.bookPath)
-                self.book.bookImgName = book_file_name + '.jpg'
-                BookImage().getBookImage(self.book.bookPath, book_file_name,
-                                         self.book.bookFormat)
-
-                book_copy1 = copy.deepcopy(self.book)
-                self.writeBookJson(self.book.bookPath, book_copy1)
-                self.addingBookInfoInDatabase(self.book)
+            book_copy1 = copy.deepcopy(self.book)
+            self.writeBookJson(self.book.bookPath, book_copy1)
+            self.addingBookInfoInDatabase(self.book)
 
     def getImageFileName(self):
         imgFilePath = os.path.join(self.book.bookPath, self.book.bookImgName)
@@ -123,8 +122,7 @@ class AddBook():
             pattern = re.compile(r"\-(\d*)\.jpg$")
             for file in os.listdir(directory):
                 print(file)
-                m = pattern.search(file)
-                if m:
+                if m := pattern.search(file):
                     #                     print(m.groups())
                     imgFilePath = m.group()
                     bookImgName = self.currentBook.bookImgName.replace(
@@ -141,12 +139,9 @@ class AddBook():
         
         '''
         logger.debug('findingSameBook')
-        isSameBookPresent = False
         books = self.createDatabase.findBookByFileName(self.book.bookFileName)
         logger.debug('len(books): %s', len(books))
-        if len(books) > 0:
-            isSameBookPresent = True
-        return isSameBookPresent
+        return len(books) > 0
 
     def addingBookInfoInDatabase(self, book):
         '''
@@ -160,49 +155,47 @@ class AddBook():
         This function will write book.json (metadata) of the newly added book in workspace.
         '''
         logger.debug('writeBookJson newDirPath: %s', newDirPath)
-        f = open(os.path.join(newDirPath, 'book.json'), 'w')
-        row2dict = dict(book.__dict__)
-        authors = []
-        try:
-            for a in row2dict['authors']:
-                author = {}
-                if type(a) == str:
-                    author['authorName'] = a
-                else:
-                    author = a.__dict__
-                if '_sa_instance_state' in author:
-                    del author['_sa_instance_state']
-                if 'book_assoc' in author:
-                    del author['book_assoc']
-                authors.append(author)
-            if '_sa_instance_state' in row2dict:
-                del row2dict['_sa_instance_state']
-            if 'authors' in row2dict:
-                del row2dict['authors']
-            if 'book_assoc' in row2dict:
-                del row2dict['book_assoc']
+        with open(os.path.join(newDirPath, 'book.json'), 'w') as f:
+            row2dict = dict(book.__dict__)
+            authors = []
+            try:
+                for a in row2dict['authors']:
+                    author = {}
+                    if type(a) == str:
+                        author['authorName'] = a
+                    else:
+                        author = a.__dict__
+                    if '_sa_instance_state' in author:
+                        del author['_sa_instance_state']
+                    if 'book_assoc' in author:
+                        del author['book_assoc']
+                    authors.append(author)
+                if '_sa_instance_state' in row2dict:
+                    del row2dict['_sa_instance_state']
+                if 'authors' in row2dict:
+                    del row2dict['authors']
+                if 'book_assoc' in row2dict:
+                    del row2dict['book_assoc']
 
-            row2dict['authors'] = authors
-            row2dict['publishedOn'] = str(datetime.now())
-            row2dict['createdOn'] = str(datetime.now())
-        except Exception as e:
-            logger.error(e)
+                row2dict['authors'] = authors
+                row2dict['publishedOn'] = str(datetime.now())
+                row2dict['createdOn'] = str(datetime.now())
+            except Exception as e:
+                logger.error(e)
 #             print newDirPath
 #             print row2dict
-        f.write(json.dumps(row2dict, sort_keys=True, indent=4))
-
-        f.close()
+            f.write(json.dumps(row2dict, sort_keys=True, indent=4))
 
     def getEpubMetadata(self, path=None):
         logger.debug('getEpubMetadata')
         os.chdir(self.book.bookPath)
-        file_name = self.book.bookName + '.epub'
+        file_name = f'{self.book.bookName}.epub'
         epubBook = EpubBook()
         epubBook.open(file_name)
 
         epubBook.parse_contents()
 
-        authorList = list()
+        authorList = []
         for authorName in epubBook.get_authors():
 
             author = Author()
@@ -256,7 +249,7 @@ class AddBook():
                 if not self.book.tag and subject:
                     self.book.tag = subject
                 elif self.book.tag and subject:
-                    self.book.tag = self.book.tag + '' + subject
+                    self.book.tag = f'{self.book.tag}{subject}'
             except Exception as e:
                 logger.error(e, exc_info=True)
             try:
@@ -298,8 +291,7 @@ class AddBook():
                 logger.error(e, exc_info=True)
             author.authorName = val
 
-            authorList = list()
-            authorList.append(author)
+            authorList = [author]
             self.book.authors = authorList
 
 if __name__ == '__main__':
@@ -316,4 +308,3 @@ if __name__ == '__main__':
     addBook.getPdfMetadata(path)
     newDirPath = '/docs/new/library/1'
     addBook.writeBookJson(newDirPath, addBook.book)
-    pass

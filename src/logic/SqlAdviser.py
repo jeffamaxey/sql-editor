@@ -12,8 +12,5 @@ class SqliteCodeComplition():
         pass
     
     def getAdvise(self, ):
-        advise=None
-        return advise
+        return None
 
-if __name__ == '__main__':
-    pass

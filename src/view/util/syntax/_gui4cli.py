@@ -141,7 +141,7 @@ class SyntaxData(syndata.SyntaxDataBase):
         @note: gui4cli supports folding but it seems to be partially broken
 
         """
-        return list() #[FOLD, FOLD_COMP]
+        return []
 
     def GetCommentPattern(self):
         """Returns a list of characters used to comment a block of code """

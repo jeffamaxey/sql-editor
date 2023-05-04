@@ -64,16 +64,10 @@ class Page():
 #         self.hasPrevious = False  # True if a previous page exists
     
     def hasNext(self):
-        next = False
-        if self.currentPage + 1 < self.pages:
-            next = True
-        return next
+        return self.currentPage + 1 < self.pages
 
     def hasPrevious(self):
-        previous = False
-        if -1 < self.currentPage - 1:
-            previous = True
-        return previous
+        return self.currentPage > 0
     
     def getNextPageNumber(self):
         if self.hasNext():
@@ -183,8 +177,8 @@ class ThumbnailCtrlPaginationPanel(wx.Panel, WorkspaceHelper):
         self.paginationBar.Realize()
 
     def updatePangnation(self): 
-        pageNumbers = [f'{1+pageNum}' for pageNum in range(self.page.pages)] 
         if hasattr(self, 'pageNumbersCountText'):
+            pageNumbers = [f'{1+pageNum}' for pageNum in range(self.page.pages)]
             self.pageNumbersCountText.SetLabel(f"/{len(pageNumbers)}")
         self.setPaginationBarStatus()
 #         if hasattr(self, 'pageNumberCtrl'):

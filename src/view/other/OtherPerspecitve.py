@@ -135,7 +135,7 @@ class OtherPerspectiveTreePanel(wx.Panel):
         wx.Panel.__init__(self, parent, id=-1)
         self.parent = parent
 #         self.fileOperations = FileOperations()
-        self.connDict = dict()
+        self.connDict = {}
         vBox = wx.BoxSizer(wx.VERTICAL)
         ####################################################################
         self.treeMap = {}
@@ -172,9 +172,7 @@ class OtherPerspectiveTreePanel(wx.Panel):
 
         # Catch the search type (name or content)
         searchMenu = self.filter.GetMenu().GetMenuItems()
-        fullSearch = searchMenu[1].IsChecked()
-
-        if fullSearch:
+        if fullSearch := searchMenu[1].IsChecked():
             self.OnSearch()
         else:
             self.RecreateTree()
@@ -211,19 +209,16 @@ class OtherPerspectiveTreePanel(wx.Panel):
         searchMenu = self.filter.GetMenu().GetMenuItems()
         fullSearch = searchMenu[1].IsChecked()
 
-        if evt:
-            if fullSearch:
-                # Do not`scan all the demo files for every char
-                # the user input, use wx.EVT_TEXT_ENTER instead
-                return
+        if evt and fullSearch:
+            # Do not`scan all the demo files for every char
+            # the user input, use wx.EVT_TEXT_ENTER instead
+            return
 
         expansionState = self.tree.GetExpansionState()
 
         current = None
-        item = self.tree.GetSelection()
-        if item:
-            prnt = self.tree.GetItemParent(item)
-            if prnt:
+        if item := self.tree.GetSelection():
+            if prnt := self.tree.GetItemParent(item):
                 current = (self.tree.GetItemText(item),
                            self.tree.GetItemText(prnt))
 
@@ -245,10 +240,6 @@ class OtherPerspectiveTreePanel(wx.Panel):
 
         treeFont.SetWeight(wx.BOLD)
         catFont.SetWeight(wx.BOLD)
-#         self.tree.SetItemFont(self.root, treeFont)
-
-        firstChild = None
-        selectItem = None
         filter = self.filter.GetValue()
         count = 0
         treeSearch = TreeSearch()
@@ -258,13 +249,13 @@ class OtherPerspectiveTreePanel(wx.Panel):
         treeItems = treeSearch.searchedNodes(dataList=perspectiveList, searchText=searchText)
 
         self.constructNode(parent=self.root, treeData=treeItems)
-        if firstChild:
+        if firstChild := None:
             self.tree.Expand(firstChild)
         if filter:
             self.tree.ExpandAll()
         elif expansionState:
             self.tree.SetExpansionState(expansionState)
-        if selectItem:
+        if selectItem := None:
             self.skipLoad = True
             self.tree.SelectItem(selectItem)
             self.skipLoad = False
@@ -296,7 +287,7 @@ class OtherPerspectiveTreePanel(wx.Panel):
         pt = event.GetPosition();
         item, flags = self.tree.HitTest(pt)
         if item and item == self.tree.GetSelection():
-            print(self.tree.GetItemText(item) + " Overview")
+            print(f"{self.tree.GetItemText(item)} Overview")
         event.Skip()
 
     #---------------------------------------------
@@ -305,8 +296,7 @@ class OtherPerspectiveTreePanel(wx.Panel):
         item = event.GetItem()
         itemText = self.tree.GetItemText(item)
         logger.debug(itemText)
-        opalPreference = self.GetTopLevelParent()
-        if opalPreference:
+        if opalPreference := self.GetTopLevelParent():
     #         rightPanel=opalPreference.rightPanelItem.GetParent()
     #         opalPreference.rightPanelItem.Hide()
     #         opalPreference.rightPanelItem.Hide()
@@ -356,8 +346,7 @@ class OtherViewBaseTreePanel(ExpansionState, TreeCtrl):
 
     def AppendItem(self, parent, text, image=-1, wnd=None):
 
-        item = TreeCtrl.AppendItem(self, parent, text, image=image)
-        return item
+        return TreeCtrl.AppendItem(self, parent, text, image=image)
 
     def BuildTreeImageList(self):
 #         imgList = wx.ImageList(16, 16)

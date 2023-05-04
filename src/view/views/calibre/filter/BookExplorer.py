@@ -32,7 +32,7 @@ class BookExplorerPanel(wx.Panel):
         wx.Panel.__init__(self, parent, id=-1)
         self.parent = parent
 #         self.fileOperations = FileOperations()
-        self.connDict = dict()
+        self.connDict = {}
         vBox = wx.BoxSizer(wx.VERTICAL)
         ####################################################################
         self.treeMap = {}
@@ -115,10 +115,8 @@ class BookExplorerPanel(wx.Panel):
         expansionState = self.tree.GetExpansionState()
 
         current = None
-        item = self.tree.GetSelection()
-        if item:
-            prnt = self.tree.GetItemParent(item)
-            if prnt:
+        if item := self.tree.GetSelection():
+            if prnt := self.tree.GetItemParent(item):
                 current = (self.tree.GetItemText(item),
                            self.tree.GetItemText(prnt))
 
@@ -141,8 +139,6 @@ class BookExplorerPanel(wx.Panel):
         treeFont.SetWeight(wx.BOLD)
         catFont.SetWeight(wx.BOLD)
 
-        firstChild = None
-        selectItem = None
         count = 0
 
         treeSearch = TreeSearch()
@@ -151,13 +147,11 @@ class BookExplorerPanel(wx.Panel):
 
         self.constructNode(parent=self.root, treeData=treeItems)
 
-        if firstChild:
+        if firstChild := None:
             self.tree.Expand(firstChild)
-#         if filter:
-#             self.tree.ExpandAll()
         elif expansionState:
             self.tree.SetExpansionState(expansionState)
-        if selectItem:
+        if selectItem := None:
             self.skipLoad = True
             self.tree.SelectItem(selectItem)
             self.skipLoad = False
@@ -207,7 +201,7 @@ class BookExplorerPanel(wx.Panel):
         pt = event.GetPosition();
         item, flags = self.tree.HitTest(pt)
         if item and item == self.tree.GetSelection():
-            print(self.tree.GetItemText(item) + " Overview")
+            print(f"{self.tree.GetItemText(item)} Overview")
         event.Skip()
 
     #---------------------------------------------
@@ -221,9 +215,8 @@ class BookExplorerPanel(wx.Panel):
         try:
             itemText = self.tree.GetItemText(item)
             logger.debug(itemText)
-            opalPreference = self.GetTopLevelParent()
-            if opalPreference:
-                pnl_children = list()
+            if opalPreference := self.GetTopLevelParent():
+                pnl_children = []
                 if hasattr(opalPreference, 'png'):
                     pnl_children = opalPreference.pnl.GetChildren()
                 for pnl in pnl_children:
@@ -260,8 +253,7 @@ class BookExplorerTreePanel(ExpansionState, TreeCtrl):
 
     def AppendItem(self, parent, text, image=-1, wnd=None):
 
-        item = TreeCtrl.AppendItem(self, parent, text, image=image)
-        return item
+        return TreeCtrl.AppendItem(self, parent, text, image=image)
 
     def BuildTreeImageList(self):
         if self._il:
@@ -280,8 +272,7 @@ class BookExplorerTreePanel(ExpansionState, TreeCtrl):
                           'history_view.png', 'synch_synch.png', 'variable_view.png', 'internal_browser.png', 'reflog.png', 'staging.png',
                           'rebase_interactive.png', 'repo_rep.png', 'gitrepository.png', 'filenav_nav.png', 'welcome16.png', 'tasks_tsk.png',
                           'resource_persp.png', 'outline_co.png','folder_user.png' ]
-        for item in bookExplorerList:
-            imageIconsName.append(item[2])
+        imageIconsName.extend(item[2] for item in bookExplorerList)
         for imageName in imageIconsName:
             try:
                 self.ImageList.Add(self.fileOperations.getImageBitmap(imageName=imageName))

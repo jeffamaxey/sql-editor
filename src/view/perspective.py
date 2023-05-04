@@ -70,12 +70,7 @@ class EclipseAuiToolbar(aui.AuiToolBar):
             print(extra2)
 
     def getToolBarItemById(self, id=None):
-        item = None
-        for _item in self._items:
-            if _item.id == id:
-                item = _item
-                break
-        return item
+        return next((_item for _item in self._items if _item.id == id), None)
 
     def OnLeaveWindow(self, event):
         """
@@ -135,57 +130,49 @@ class EclipseAuiToolbar(aui.AuiToolBar):
             self._action_pos = wx.Point(-1, -1)
             self._action_item = None
 
-        else:
+        elif self._action_item and hit_item == self._action_item:
+            self.SetToolTip("")
 
-            if self._action_item and hit_item == self._action_item:
-                self.SetToolTip("")
+            if hit_item.kind in [ITEM_CHECK, ITEM_RADIO]:
+                toggle = not (self._action_item.state & aui.AUI_BUTTON_STATE_CHECKED)
+                self.ToggleTool(self._action_item.id, toggle)
 
-                if hit_item.kind in [ITEM_CHECK, ITEM_RADIO]:
-                    toggle = not (self._action_item.state & aui.AUI_BUTTON_STATE_CHECKED)
-                    self.ToggleTool(self._action_item.id, toggle)
+                # repaint immediately
+                self.Refresh(False)
+                self.Update()
 
-                    # repaint immediately
-                    self.Refresh(False)
-                    self.Update()
+                e = wx.CommandEvent(wx.wxEVT_COMMAND_MENU_SELECTED, self._action_item.id)
+                e.SetEventObject(self)
+                e.SetInt(toggle)
+                self._action_pos = wx.Point(-1, -1)
+                self._action_item = None
 
-                    e = wx.CommandEvent(wx.wxEVT_COMMAND_MENU_SELECTED, self._action_item.id)
-                    e.SetEventObject(self)
-                    e.SetInt(toggle)
-                    self._action_pos = wx.Point(-1, -1)
-                    self._action_item = None
+                self.ProcessEvent(e)
+            elif self._action_item.id == ID_RESTORE_FRAME:
+                # find aui manager
+                manager = self.GetAuiManager()
 
-                    self.ProcessEvent(e)
-                    self.DoIdleUpdate()
+                if not manager:
+                    return
 
-                else:
-
-                    if self._action_item.id == ID_RESTORE_FRAME:
-                        # find aui manager
-                        manager = self.GetAuiManager()
-
-                        if not manager:
-                            return
-
-                        if self._action_item.target:
-                            pane = manager.GetPane(self._action_item.target)
-                        else:
-                            pane = manager.GetPane(self)
-
+                pane = (
+                    manager.GetPane(self._action_item.target)
+                    if self._action_item.target
+                    else manager.GetPane(self)
+                )
 #                         from . import framemanager
-                        e = AuiManagerEvent(wxEVT_AUI_PANE_MIN_RESTORE)
+                e = AuiManagerEvent(wxEVT_AUI_PANE_MIN_RESTORE)
 
-                        e.SetManager(manager)
-                        e.SetPane(pane)
+                e.SetManager(manager)
+                e.SetPane(pane)
 
-                        manager.ProcessEvent(e)
-                        self.DoIdleUpdate()
+                manager.ProcessEvent(e)
+            else:
 
-                    else:
-
-                        e = wx.CommandEvent(wx.wxEVT_COMMAND_MENU_SELECTED, self._action_item.id)
-                        e.SetEventObject(self)
-                        self.ProcessEvent(e)
-                        self.DoIdleUpdate()
+                e = wx.CommandEvent(wx.wxEVT_COMMAND_MENU_SELECTED, self._action_item.id)
+                e.SetEventObject(self)
+                self.ProcessEvent(e)
+            self.DoIdleUpdate()
 
         # reset drag and drop member variables
         self._dragging = False
@@ -210,18 +197,19 @@ class EclipseAuiToolbar(aui.AuiToolBar):
 
             dropdown_size = self._art.GetElementSize(aui.AUI_TBART_OVERFLOW_SIZE)
             if dropdown_size > 0 and event.GetX() > cli_rect.width - dropdown_size and \
-               event.GetY() >= 0 and event.GetY() < cli_rect.height and self._art:
+                   event.GetY() >= 0 and event.GetY() < cli_rect.height and self._art:
                 return
 
         self._action_pos = wx.Point(*event.GetPosition())
         self._action_item = self.FindToolForPosition(*event.GetPosition())
 
-        if self._action_item:
-            if self._action_item.state & aui.AUI_BUTTON_STATE_DISABLED:
-
-                self._action_pos = wx.Point(-1, -1)
-                self._action_item = None
-                return
+        if (
+            self._action_item
+            and self._action_item.state & aui.AUI_BUTTON_STATE_DISABLED
+        ):
+            self._action_pos = wx.Point(-1, -1)
+            self._action_item = None
+            return
 
     def OnRightUp(self, event):
         """
@@ -237,19 +225,15 @@ class EclipseAuiToolbar(aui.AuiToolBar):
             e = AuiToolBarEvent(wxEVT_COMMAND_AUITOOLBAR_RIGHT_CLICK, self._action_item.id)
             e.SetEventObject(self)
             e.SetToolId(self._action_item.id)
-            e.SetClickPoint(self._action_pos)
-            self.ProcessEvent(e)
-            self.DoIdleUpdate()
-
         else:
 
             # right-clicked on the invalid area of the toolbar
             e = AuiToolBarEvent(wxEVT_COMMAND_AUITOOLBAR_RIGHT_CLICK, -1)
             e.SetEventObject(self)
             e.SetToolId(-1)
-            e.SetClickPoint(self._action_pos)
-            self.ProcessEvent(e)
-            self.DoIdleUpdate()
+        e.SetClickPoint(self._action_pos)
+        self.ProcessEvent(e)
+        self.DoIdleUpdate()
 
         # reset member variables
         self._action_pos = wx.Point(-1, -1)
@@ -274,18 +258,19 @@ class EclipseAuiToolbar(aui.AuiToolBar):
 
             dropdown_size = self._art.GetElementSize(aui.AUI_TBART_OVERFLOW_SIZE)
             if dropdown_size > 0 and event.GetX() > cli_rect.width - dropdown_size and \
-               event.GetY() >= 0 and event.GetY() < cli_rect.height and self._art:
+                   event.GetY() >= 0 and event.GetY() < cli_rect.height and self._art:
                 return
 
         self._action_pos = wx.Point(*event.GetPosition())
         self._action_item = self.FindToolForPosition(*event.GetPosition())
 
-        if self._action_item:
-            if self._action_item.state & aui.AUI_BUTTON_STATE_DISABLED:
-
-                self._action_pos = wx.Point(-1, -1)
-                self._action_item = None
-                return
+        if (
+            self._action_item
+            and self._action_item.state & aui.AUI_BUTTON_STATE_DISABLED
+        ):
+            self._action_pos = wx.Point(-1, -1)
+            self._action_item = None
+            return
 
     def OnMiddleUp(self, event):
         """
@@ -296,15 +281,17 @@ class EclipseAuiToolbar(aui.AuiToolBar):
 
         hit_item = self.FindToolForPosition(*event.GetPosition())
 
-        if self._action_item and hit_item == self._action_item:
-            if hit_item.kind == ITEM_NORMAL:
-
-                e = AuiToolBarEvent(wxEVT_COMMAND_AUITOOLBAR_MIDDLE_CLICK, self._action_item.id)
-                e.SetEventObject(self)
-                e.SetToolId(self._action_item.id)
-                e.SetClickPoint(self._action_pos)
-                self.ProcessEvent(e)
-                self.DoIdleUpdate()
+        if (
+            self._action_item
+            and hit_item == self._action_item
+            and hit_item.kind == ITEM_NORMAL
+        ):
+            e = AuiToolBarEvent(wxEVT_COMMAND_AUITOOLBAR_MIDDLE_CLICK, self._action_item.id)
+            e.SetEventObject(self)
+            e.SetToolId(self._action_item.id)
+            e.SetClickPoint(self._action_pos)
+            self.ProcessEvent(e)
+            self.DoIdleUpdate()
 
         # reset member variables
         self._action_pos = wx.Point(-1, -1)
@@ -319,7 +306,7 @@ class EclipseAuiToolbar(aui.AuiToolBar):
 
         # start a drag event
         if not self._dragging and self._action_item != None and self._action_pos != wx.Point(-1, -1) and \
-           abs(event.GetX() - self._action_pos.x) + abs(event.GetY() - self._action_pos.y) > 5:
+               abs(event.GetX() - self._action_pos.x) + abs(event.GetY() - self._action_pos.y) > 5:
 
             self.SetToolTip("")
             self._dragging = True
@@ -333,21 +320,14 @@ class EclipseAuiToolbar(aui.AuiToolBar):
 
         hit_item = self.FindToolForPosition(*event.GetPosition())
 
-        if hit_item:
-            if not hit_item.state & aui.AUI_BUTTON_STATE_DISABLED:
-                self.SetHoverItem(hit_item)
-            else:
-                self.SetHoverItem(None)
+        if hit_item and hit_item.state & aui.AUI_BUTTON_STATE_DISABLED:
+            self.SetHoverItem(None)
 
         else:
-            # no hit item, remove any hit item
             self.SetHoverItem(hit_item)
-
-        # figure out tooltips
-        packing_hit_item = self.FindToolForPositionWithPacking(*event.GetPosition())
-
-        if packing_hit_item:
-
+        if packing_hit_item := self.FindToolForPositionWithPacking(
+            *event.GetPosition()
+        ):
             if packing_hit_item != self._tip_item:
                 self._tip_item = packing_hit_item
 
@@ -359,7 +339,6 @@ class EclipseAuiToolbar(aui.AuiToolBar):
                     self.StopPreviewTimer()
 
         else:
-
             self.SetToolTip("")
             self._tip_item = None
             self.StopPreviewTimer()
@@ -393,7 +372,7 @@ class MyAuiManager(aui.AuiManager):
         tabDirection=5 is the center
         '''
         self.SetAutoNotebookStyle(aui.AUI_NB_DEFAULT_STYLE | wx.BORDER_NONE)
-        if name == None:
+        if name is None:
             name = captionName
         isPaneAdded = False
         for pane in self.GetAllPanes():
@@ -402,26 +381,21 @@ class MyAuiManager(aui.AuiManager):
                 if not icon:
                     icon = FileOperations().getImageBitmap(imageName=imageName)
                 auiPanInfo = aui.AuiPaneInfo().Icon(icon).\
-                    Name(name).Caption(captionName).LeftDockable(True).Direction(wx.TOP).\
-                    Center().Layer(0).Position(0).CloseButton(True).MaximizeButton(True).MinimizeButton(True).MinSize(200, -1)\
-                    .BestSize(200, -1).CaptionVisible(visible=True)
+                        Name(name).Caption(captionName).LeftDockable(True).Direction(wx.TOP).\
+                        Center().Layer(0).Position(0).CloseButton(True).MaximizeButton(True).MinimizeButton(True).MinSize(200, -1)\
+                        .BestSize(200, -1).CaptionVisible(visible=True)
                 targetTab = pane
                 if not pane.HasNotebook():
                     self.CreateNotebookBase(self._panes, pane)
+                isPaneAdded = True
 #                 targetTab.NotebookPage(pane.notebook_id)
-                    self.AddPane(window, auiPanInfo, target=targetTab)
-                    isPaneAdded = True
-#                 self._mgr._notebooks
-#                 self._mgr.ActivatePane(targetTab.window)
-                else:
-                    self.AddPane(window, auiPanInfo, target=targetTab)
-                    isPaneAdded = True
+                self.AddPane(window, auiPanInfo, target=targetTab)
                 break
 
         if not isPaneAdded:
             auiPanInfo = aui.AuiPaneInfo().Icon(FileOperations().getImageBitmap(imageName=imageName)).\
-                Name(name).Caption(captionName).LeftDockable(True).Dockable(True).Movable(True).MinSize(200, -1).BestSize(200, -1).CaptionVisible(visible=True).Direction(wx.TOP).\
-                Center().Layer(0).Position(0).CloseButton(True).MaximizeButton(True).MinimizeButton(True).CaptionVisible(visible=True)
+                    Name(name).Caption(captionName).LeftDockable(True).Dockable(True).Movable(True).MinSize(200, -1).BestSize(200, -1).CaptionVisible(visible=True).Direction(wx.TOP).\
+                    Center().Layer(0).Position(0).CloseButton(True).MaximizeButton(True).MinimizeButton(True).CaptionVisible(visible=True)
             auiPanInfo.dock_direction = tabDirection
             self.AddPane(window, auiPanInfo)
 
@@ -494,11 +468,7 @@ class MyAuiManager(aui.AuiManager):
         :see: :meth:`GetPane`
         """
 
-        for p in self._panes:
-            if p.name in name:
-                return p
-
-        return NonePaneInfo
+        return next((p for p in self._panes if p.name in name), NonePaneInfo)
 
     def hidePane(self, window):
         self.ShowPane(window, show=False)
@@ -684,8 +654,7 @@ class PerspectiveManager(object):
         managed_window = self._mgr.GetManagedWindow()
         wnd_pos = managed_window.GetPosition()
         (x, y) = wnd_size = managed_window.GetSize()
-        point = wx.Point(x - ((len(self.perspectiveList) - 1) * 32) + 5, 0)
-        return point
+        return wx.Point(x - ((len(self.perspectiveList) - 1) * 32) + 5, 0)
 
     def OnPaneClose(self, event):
         logger.debug("OnPaneClose")
@@ -722,7 +691,7 @@ class PerspectiveManager(object):
         paneLabel = event.pane.caption
         etype = event.GetEventType()
 
-        strs = "Pane %s " % paneLabel
+        strs = f"Pane {paneLabel} "
         if etype == aui.wxEVT_AUI_PANE_FLOATING:
             strs += "is about to be floated"
 
@@ -840,15 +809,14 @@ class PerspectiveManager(object):
         elif self.selectedPerspectiveName == 'python':
             allowedInstanceForProspective.remove(PythonExplorerPanel)
             allowedInstanceForProspective.remove(py.shell.Shell)
-        elif self.selectedPerspectiveName == 'java':
+        elif (
+            self.selectedPerspectiveName == 'java'
+            or self.selectedPerspectiveName != 'resource'
+            and self.selectedPerspectiveName == 'git'
+        ):
             allowedInstanceForProspective.remove(CreatingJavaExplorerPanel)
         elif self.selectedPerspectiveName == 'resource':
             allowedInstanceForProspective.remove(FileBrowser)
-        elif self.selectedPerspectiveName == 'java':
-            allowedInstanceForProspective.remove(CreatingJavaExplorerPanel)
-        elif self.selectedPerspectiveName == 'git':
-            allowedInstanceForProspective.remove(CreatingJavaExplorerPanel)
-
 #         for pane in self._mgr.GetAllPanes():
 #             if pane.window:
 #                 for instance in allowedInstanceForProspective :
@@ -961,7 +929,7 @@ class PerspectiveManager(object):
     def constructViewToolBar(self, toobar=None, perspectiveName='python'):
         # create some toolbars
 #         tb1 = aui.AuiToolBar(self, -1, agwStyle=aui.AUI_TB_DEFAULT_STYLE | wx.NO_BORDER)
-        if toobar == None:
+        if toobar is None:
             self._ctrl = None
             toobar = EclipseAuiToolbar(self)
         # id, leble, imageName, lebel, method,setToolDropdown , list of perspective, initial state(disable/enable ), kind=wx.ITEM_CHECK
@@ -1019,7 +987,7 @@ class PerspectiveManager(object):
                     state = tool[7]
                     if tool[8] == wx.ITEM_RADIO:
                         toolItem = toobar.AddToggleTool(tool[0], self.fileOperations.getImageBitmap(imageName=tool[2]), wx.NullBitmap, toggle=True, short_help_string=tool[3])
-                        
+
                     if tool[8] == wx.ITEM_CHECK:
                         toolItem = toobar.AddToggleTool(tool[0], self.fileOperations.getImageBitmap(imageName=tool[2]), wx.NullBitmap, toggle=True, short_help_string=tool[3])
                         toolItem.__setattr__('toggle', False)
@@ -1046,11 +1014,7 @@ class PerspectiveManager(object):
         for tool in tools:
             if len(tool) != 0 and perspectiveName in tool[6]:
                 try:
-                    if perspectiveName=='calibre':
-                        toobar._items.append(self.toolbarItems[tool[0]])
-                    else:
-                        
-                        toobar._items.append(self.toolbarItems[tool[0]])
+                    toobar._items.append(self.toolbarItems[tool[0]])
                 except Exception as e:
                     logger.error(e)
                     logger.error(tool[0], tool)
@@ -1068,20 +1032,20 @@ class PerspectiveManager(object):
 #         logger.debug(f'onCalibre {event.Id}')
         viewToolbar = self._mgr.GetPane("viewToolbar").window
         if event.Id == ID_RELOAD_BOOK:
-            logger.debug(f'ID_RELOAD_BOOK')
+            logger.debug('ID_RELOAD_BOOK')
             item=viewToolbar.FindTool(ID_RELOAD_BOOK)
             item.SetState(aui.AUI_BUTTON_STATE_NORMAL)
             pub.sendMessage('reloadingDatabase', event=event)
         if event.Id == ID_ADD_BOOK:
-            logger.debug(f'ID_ADD_BOOK')
+            logger.debug('ID_ADD_BOOK')
             item=viewToolbar.FindTool(ID_ADD_BOOK)
             item.SetState(aui.AUI_BUTTON_STATE_NORMAL)
         if event.Id == ID_EDIT_BOOK_METADATA:
-            logger.debug(f'ID_EDIT_BOOK_METADATA')
+            logger.debug('ID_EDIT_BOOK_METADATA')
             item=viewToolbar.FindTool(ID_EDIT_BOOK_METADATA)
             item.SetState(aui.AUI_BUTTON_STATE_NORMAL)
         if event.Id == ID_CONVERT_BOOK:
-            logger.debug(f'ID_CONVERT_BOOK')
+            logger.debug('ID_CONVERT_BOOK')
             item=viewToolbar.FindTool(ID_CONVERT_BOOK)
             item.SetState(aui.AUI_BUTTON_STATE_NORMAL)
         if event.Id == ID_REMOVE_BOOK:
@@ -1091,11 +1055,11 @@ class PerspectiveManager(object):
 #             toolRemove.state =aui.AUI_BUTTON_STATE_NORMAL
 #             pub.sendMessage('ID_REMOVE_BOOK', event=ID_REMOVE_BOOK)
         if event.Id == ID_GET_BOOK:
-            logger.debug(f'ID_GET_BOOK')
+            logger.debug('ID_GET_BOOK')
             item=viewToolbar.FindTool(ID_GET_BOOK)
             item.SetState(aui.AUI_BUTTON_STATE_NORMAL)
         if event.Id == ID_CONNECT_SHARE_BOOK:
-            logger.debug(f'ID_CONNECT_SHARE_BOOK')
+            logger.debug('ID_CONNECT_SHARE_BOOK')
         viewToolbar.Realize()
         self._mgr.Update()
             
@@ -1157,7 +1121,7 @@ class PerspectiveManager(object):
 
             tb = event.GetEventObject()
             tb.SetToolSticky(event.GetId(), True)
-            baseList = list()
+            baseList = []
             if event.Id == ID_RUN_AS_MENU:
                 baseList = [
                         [],
@@ -1253,38 +1217,33 @@ class PerspectiveManager(object):
 
     def creatingFileExplorer(self):
 
-        fileBrowserPanel = FileBrowser(self, size=(200, 300))
-        return fileBrowserPanel
+        return FileBrowser(self, size=(200, 300))
 
     def creatingTreeCtrl(self):
-        # Create a TreeCtrl
-#         treePanel = CreatingTreePanel(self)
-        treePanel = DataSourcePanel(self)
-
-        return treePanel
+        return DataSourcePanel(self)
 
     def getWorksheet(self, dataSourceTreeNode=None):
-        worksheetPanel = CreatingWorksheetWithToolbarPanel(self, -1, style=wx.CLIP_CHILDREN | wx.BORDER_NONE, dataSourceTreeNode=dataSourceTreeNode)
-        return worksheetPanel
+        return CreatingWorksheetWithToolbarPanel(
+            self,
+            -1,
+            style=wx.CLIP_CHILDREN | wx.BORDER_NONE,
+            dataSourceTreeNode=dataSourceTreeNode,
+        )
 
     def constructCenterPane(self):
-        worksheet = CreateWorksheetTabPanel(self)
-#         worksheet.addTab('Start Page')
-        return worksheet
+        return CreateWorksheetTabPanel(self)
 
     def sqlConsoleOutputPane(self):
-        sqlConsoleOutputPanel = SqlConsoleOutputPanel(self)
-        return sqlConsoleOutputPanel
+        return SqlConsoleOutputPanel(self)
 
     def constructHistoryPane(self):
-        historyGrid = HistoryGrid(self)
-        return historyGrid
+        return HistoryGrid(self)
 
     def CreateSizeReportCtrl(self, width=80, height=80):
 
-        ctrl = SizeReportCtrl(self, -1, wx.DefaultPosition,
-                              wx.Size(width, height), self._mgr)
-        return ctrl
+        return SizeReportCtrl(
+            self, -1, wx.DefaultPosition, wx.Size(width, height), self._mgr
+        )
 
 
 class SizeReportCtrl(wx.PyControl):

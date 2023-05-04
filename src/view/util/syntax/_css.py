@@ -22,6 +22,7 @@ FILE: css.py
 
 """
 
+
 __author__ = "Cody Precord <cprecord@editra.org>"
 __svnid__ = "$Id: _css.py 72399 2012-08-29 19:56:26Z CJP $"
 __revision__ = "$Revision: 72399 $"
@@ -144,15 +145,15 @@ SYNTAX_ITEMS = [ (stc.STC_CSS_DEFAULT, 'default_style'),
 
 # TODO: add styling and keywords for new style regions in 2.9
 if wx.VERSION >= (2, 9, 0, 0, ''):
-    # Browser specific identifiers
-    SYNTAX_ITEMS.append((stc.STC_CSS_EXTENDED_IDENTIFIER, 'default_style'))
-    SYNTAX_ITEMS.append((stc.STC_CSS_EXTENDED_PSEUDOCLASS, 'default_style'))
-    SYNTAX_ITEMS.append((stc.STC_CSS_EXTENDED_PSEUDOELEMENT, 'default_style'))
-    # CSS3 Properties
-    SYNTAX_ITEMS.append((stc.STC_CSS_IDENTIFIER3, 'keyword2_style'))
-    # Pseudo elements
-    SYNTAX_ITEMS.append((stc.STC_CSS_PSEUDOELEMENT, 'default_style'))
-
+    SYNTAX_ITEMS.extend(
+        (
+            (stc.STC_CSS_EXTENDED_IDENTIFIER, 'default_style'),
+            (stc.STC_CSS_EXTENDED_PSEUDOCLASS, 'default_style'),
+            (stc.STC_CSS_EXTENDED_PSEUDOELEMENT, 'default_style'),
+            (stc.STC_CSS_IDENTIFIER3, 'keyword2_style'),
+            (stc.STC_CSS_PSEUDOELEMENT, 'default_style'),
+        )
+    )
 #---- Extra Properties ----#
 FOLD = ("fold", "1")
 
@@ -170,14 +171,12 @@ class SyntaxData(syndata.SyntaxDataBase):
     def GetKeywords(self):
         """Returns Specified Keywords List """
         kwlist = [CSS1_KEYWORDS , CSS_PSUEDO_CLASS]
-        # 2.9 supports CSS3 so for 2.8 just add CSS3 keywords to the css2 list 
+        # 2.9 supports CSS3 so for 2.8 just add CSS3 keywords to the css2 list
         if wx.VERSION < (2, 9, 0, 0, ''):
             css2_kw = (CSS2_KEYWORDS[0], " ".join((CSS2_KEYWORDS[1], CSS3_KEYWORDS[1])))
             kwlist.append(css2_kw)
         else:
-            kwlist.append(CSS2_KEYWORDS)
-            kwlist.append(CSS3_KEYWORDS)
-            kwlist.append(PSEUDO_ELEMENTS)
+            kwlist.extend((CSS2_KEYWORDS, CSS3_KEYWORDS, PSEUDO_ELEMENTS))
         return kwlist
 
     def GetSyntaxSpec(self):
@@ -207,11 +206,7 @@ def AutoIndenter(estc, pos, ichar):
     eolch = estc.GetEOLChar()
 
     indent = estc.GetLineIndentation(line)
-    if ichar == u"\t":
-        tabw = estc.GetTabWidth()
-    else:
-        tabw = estc.GetIndent()
-
+    tabw = estc.GetTabWidth() if ichar == u"\t" else estc.GetIndent()
     i_space = indent / tabw
     ndent = eolch + ichar * i_space
     rtxt = ndent + ((indent - (tabw * i_space)) * u' ')

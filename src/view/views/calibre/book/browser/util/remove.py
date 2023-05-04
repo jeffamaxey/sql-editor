@@ -62,19 +62,18 @@ class Util():
         bytes = float(bytes)
         if bytes >= 1099511627776:
             terabytes = bytes / 1099511627776
-            size = '%.2fT' % terabytes
+            return '%.2fT' % terabytes
         elif bytes >= 1073741824:
             gigabytes = bytes / 1073741824
-            size = '%.2fG' % gigabytes
+            return '%.2fG' % gigabytes
         elif bytes >= 1048576:
             megabytes = bytes / 1048576
-            size = '%.2fM' % megabytes
+            return '%.2fM' % megabytes
         elif bytes >= 1024:
             kilobytes = bytes / 1024
-            size = '%.2fK' % kilobytes
+            return '%.2fK' % kilobytes
         else:
-            size = '%.2fb' % bytes
-        return size
+            return '%.2fb' % bytes
 
 if __name__ == '__main__':
     path = '/home/vijay/Documents/Aptana_Workspace/Better/seleniumone/books/3238'
@@ -82,4 +81,3 @@ if __name__ == '__main__':
     util = Util()
 #     util.remove(path)
     util.getData()
-    pass

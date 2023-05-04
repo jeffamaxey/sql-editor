@@ -186,11 +186,8 @@ class SyntaxData(syndata.SyntaxDataBase):
 
     def GetKeywords(self):
         """Returns Specified Keywords List """
-        keywords = list()
         tmp = [VB_KW, VB_UKW1, VB_UKW2, VB_UKW3]
-        for keyw in tmp:
-            keywords.append((keyw[0], keyw[1].lower()))
-        return keywords
+        return [(keyw[0], keyw[1].lower()) for keyw in tmp]
 
     def GetSyntaxSpec(self):
         """Syntax Specifications """
